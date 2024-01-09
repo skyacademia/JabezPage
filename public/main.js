@@ -482,6 +482,7 @@ const intersectionObserverUnlimitedScroll = new IntersectionObserver(async (entr
                 cardTag.classList.add("card");
                 cardTag.classList.add("shadow-sm");
                 cardTag.classList.add("mb-3");
+                cardTag.setAttribute("data-src", `${youtubeLink}`);
 
                 cardImageTag.classList.add("card-img-top");
                 cardImageTag.src = `${memberYoutubeThumnailPath}`;
@@ -501,6 +502,31 @@ const intersectionObserverUnlimitedScroll = new IntersectionObserver(async (entr
 
                 cardTag.appendChild(cardImageTag);
                 cardTag.appendChild(cardBodyTag);
+
+                cardTag.addEventListener("click", function () {
+                    const width = window.innerWidth;
+                    const height = window.innerHeight;
+                    const iframe = modal.querySelector("iframe");
+                    // 가로 모드일 때
+                    if(width > height){
+                        const iframeHeight = height * 0.8;
+                        const iframeWidth = (iframeHeight * youtubeIframeInfo.widthRatio) / youtubeIframeInfo.heightRatio;
+                        iframe.style.width = iframeWidth + "px";
+                        iframe.style.height = iframeHeight + "px";
+                    }else if(width < height){
+                        const iframeWidth = isMobile ? width * 0.9 : width * 0.8;
+                        const iframeHeight = (iframeWidth * youtubeIframeInfo.heightRatio) / youtubeIframeInfo.widthRatio;
+                        iframe.style.width = iframeWidth + "px";
+                        iframe.style.height = iframeHeight + "px";
+                    }
+                    iframe.src = this.getAttribute("data-src");
+
+                    if (modal.classList.contains("d-none")) {
+                        modal.classList.remove("d-none");
+                    }
+                    modal.classList.add("d-flex");
+                    document.body.style.overflow = "hidden";
+                });
 
                 colTag.appendChild(cardTag);
 
