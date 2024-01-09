@@ -152,38 +152,48 @@ async function preloadImages() {
             }
             json.forEach((info) => {
                 const memberName = info.MemberName;
-                const memberImagePath = info.MemberImagePath;
+                const memberYoutubeThumnailPath = info.MemberYoutubeThumbnailLink;
                 const memberText = info.MemberText;
                 const youtubeLink = info.MemberYoutubeLink;
 
                 const colTag = document.createElement("div");
-                const imageTag = document.createElement("img");
-                const hadingTag = document.createElement("h5");
-                const textTag = document.createElement("p");
-                const youtubeBtnWrapperTag = document.createElement("p");
-                const youtubeBtnTag = document.createElement("button");
+                const cardTag = document.createElement("div");
+                const cardImageTag = document.createElement("img");
+                const cardBodyTag = document.createElement("div");
+
+                const cardTitleTag = document.createElement("h5");
+                const cardTextTag = document.createElement("p");
+                
                 colTag.classList.add("col-md-4");
                 colTag.classList.add("card-default-setting");
                 colTag.classList.add("animation-fadeIn-down");
-                colTag.classList.add("d-flex");
-                colTag.classList.add("flex-column");
-                colTag.classList.add("align-items-center");
-                colTag.classList.add("justify-content-center");
                 colTag.style.animationDelay = `${animationDelayTime}s`;
-                imageTag.classList.add("rounded-circle");
-                imageTag.src = `${memberImagePath}`;
-                imageTag.style.width = "140px";
-                imageTag.style.height = "140px";
-                hadingTag.classList.add("fw-normal");
-                hadingTag.innerText = memberName;
-                textTag.innerText = memberText;
 
-                youtubeBtnTag.classList.add("btn");
-                youtubeBtnTag.classList.add("btn-success");
-                youtubeBtnTag.setAttribute("data-src", `${youtubeLink}`);
-                youtubeBtnTag.innerText = "Youtube";
+                cardTag.classList.add("card");
+                cardTag.classList.add("shadow-sm");
+                cardTag.classList.add("mb-3");
+                cardTag.setAttribute("data-src", `${youtubeLink}`);
 
-                youtubeBtnTag.addEventListener("click", function () {
+                cardImageTag.classList.add("card-img-top");
+                cardImageTag.src = `${memberYoutubeThumnailPath}`;
+                cardImageTag.style.width = "100%";
+                cardImageTag.style.height = `${(cardImageTag.style.width * youtubeIframeInfo.heightRatio) / youtubeIframeInfo.widthRatio}px`;
+                
+                cardBodyTag.classList.add("card-body");
+
+                cardTitleTag.classList.add("card-title");
+                cardTitleTag.innerText = memberName;
+                
+                cardTextTag.classList.add("card-text");
+                cardTextTag.innerText = memberText;
+
+                cardBodyTag.appendChild(cardTitleTag);
+                cardBodyTag.appendChild(cardTextTag);
+
+                cardTag.appendChild(cardImageTag);
+                cardTag.appendChild(cardBodyTag);
+
+                cardTag.addEventListener("click", function () {
                     const width = window.innerWidth;
                     const height = window.innerHeight;
                     const iframe = modal.querySelector("iframe");
@@ -208,12 +218,10 @@ async function preloadImages() {
                     document.body.style.overflow = "hidden";
                 });
 
-                youtubeBtnWrapperTag.appendChild(youtubeBtnTag);
-                colTag.appendChild(imageTag);
-                colTag.appendChild(hadingTag);
-                colTag.appendChild(textTag);
-                colTag.appendChild(youtubeBtnWrapperTag);
+                colTag.appendChild(cardTag);
+
                 rowTag.appendChild(colTag);
+
                 animationDelayTime += 0.1;
             })
             infiniteScrollInfo.id++;
@@ -454,60 +462,50 @@ const intersectionObserverUnlimitedScroll = new IntersectionObserver(async (entr
             }
             json.forEach((info) => {
                 const memberName = info.MemberName;
-                const memberImagePath = info.MemberImagePath;
+                const memberYoutubeThumnailPath = info.MemberYoutubeThumbnailLink;
                 const memberText = info.MemberText;
                 const youtubeLink = info.MemberYoutubeLink;
 
                 const colTag = document.createElement("div");
-                const imageTag = document.createElement("img");
-                const hadingTag = document.createElement("h5");
-                const textTag = document.createElement("p");
-                const youtubeBtnWrapperTag = document.createElement("p");
-                const youtubeBtnTag = document.createElement("button");
+                const cardTag = document.createElement("div");
+                const cardImageTag = document.createElement("img");
+                const cardBodyTag = document.createElement("div");
+
+                const cardTitleTag = document.createElement("h5");
+                const cardTextTag = document.createElement("p");
+                
                 colTag.classList.add("col-md-4");
                 colTag.classList.add("card-default-setting");
                 colTag.classList.add("animation-fadeIn-down");
-                colTag.classList.add("d-flex");
-                colTag.classList.add("flex-column");
-                colTag.classList.add("align-items-center");
-                colTag.classList.add("justify-content-center");
                 colTag.style.animationDelay = `${animationDelayTime}s`;
-                imageTag.classList.add("rounded-circle");
-                imageTag.src = `${memberImagePath}`;
-                imageTag.style.width = "140px";
-                imageTag.style.height = "140px";
-                hadingTag.classList.add("fw-normal");
-                hadingTag.innerText = memberName;
-                textTag.innerText = memberText;
 
-                youtubeBtnTag.classList.add("btn");
-                youtubeBtnTag.classList.add("btn-success");
-                youtubeBtnTag.setAttribute("data-src", `${youtubeLink}`);
-                youtubeBtnTag.innerText = "Youtube";
+                cardTag.classList.add("card");
+                cardTag.classList.add("shadow-sm");
+                cardTag.classList.add("mb-3");
 
-                youtubeBtnTag.addEventListener("click", function () {
-                    const width = window.innerWidth;
-                    const height = window.innerHeight;
-                    const iframe = modal.querySelector("iframe");
-                    if (isMobile != true) {
-                        iframe.style.width = width * 0.8 + "px";
-                        iframe.style.height = height * 0.8 + "px";
-                    }
-                    iframe.src = this.getAttribute("data-src");
+                cardImageTag.classList.add("card-img-top");
+                cardImageTag.src = `${memberYoutubeThumnailPath}`;
+                cardImageTag.style.width = "100%";
+                cardImageTag.style.height = `${(cardImageTag.style.width * youtubeIframeInfo.heightRatio) / youtubeIframeInfo.widthRatio}px`;
 
-                    if (modal.classList.contains("d-none")) {
-                        modal.classList.remove("d-none");
-                    }
-                    modal.classList.add("d-flex");
-                    document.body.style.overflow = "hidden";
-                });
+                cardBodyTag.classList.add("card-body");
 
-                youtubeBtnWrapperTag.appendChild(youtubeBtnTag);
-                colTag.appendChild(imageTag);
-                colTag.appendChild(hadingTag);
-                colTag.appendChild(textTag);
-                colTag.appendChild(youtubeBtnWrapperTag);
+                cardTitleTag.classList.add("card-title");
+                cardTitleTag.innerText = memberName;
+                
+                cardTextTag.classList.add("card-text");
+                cardTextTag.innerText = memberText;
+
+                cardBodyTag.appendChild(cardTitleTag);
+                cardBodyTag.appendChild(cardTextTag);
+
+                cardTag.appendChild(cardImageTag);
+                cardTag.appendChild(cardBodyTag);
+
+                colTag.appendChild(cardTag);
+
                 rowTag.appendChild(colTag);
+
                 animationDelayTime += 0.1;
             })
             infiniteScrollInfo.id++;
