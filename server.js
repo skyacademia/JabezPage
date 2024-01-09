@@ -3,7 +3,7 @@ const sqlite3 = require('sqlite3').verbose();
 const morgan = require('morgan');
 const app = express();
 
-// app.use(morgan('combined'));
+app.use(morgan('combined'));
 
 // 서버를 8080 포트로 실행
 app.listen(8080, () => {
@@ -18,7 +18,7 @@ app.get('/', (req, res) => {
 // public 폴더를 static 폴더로 지정
 app.use(express.static('public'));
 
-// client가 'api/data'로 접속하면 sqplite3로 연결한 뒤 데이터베이스에서 데이터를 가져와서 전송
+// client가 '/api/memberData/:id'로 접속하면 sqplite3로 연결한 뒤 데이터베이스에서 데이터를 가져와서 전송
 app.get('/api/memberData/:id', (req, res) => {
   const id = req.params.id;
   let db = new sqlite3.Database('./database/Jabez_database.db', sqlite3.OPEN_READONLY, (err) => {
@@ -34,11 +34,10 @@ app.get('/api/memberData/:id', (req, res) => {
       console.error(err.message);
     }else{
       console.log('Query successfully executed.');
-      console.log(rows);
       res.send(rows);
     }
   });
-
+  // 데이터베이스 연결 종료
   db.close((err) => {
     if (err) {
       console.error(err.message);

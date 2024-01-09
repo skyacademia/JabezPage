@@ -74,6 +74,17 @@ nav{
     transition: all 1.0s;
 }
 
+.modal {
+    overflow: auto; 
+    background-color: rgba(0,0,0,0.6); 
+    transition: all 0.5s;
+}
+  
+.modal-content {
+    background-color: transparent;
+    transition: all 0.5s;
+    border: none;
+}
 
 @keyframes fadeInRight {
     from{
