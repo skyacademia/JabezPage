@@ -40,8 +40,13 @@ const sectionInfo = [
     },
     {
         // section-3
-        multipleValue: 0,
+        multipleValue: 1,
         obj: document.querySelector("#scroll-section-3"),
+    },
+    {
+        // section-4
+        multipleValue: 0,
+        obj: document.querySelector("#scroll-section-4"),
     },
 ]
 const infiniteScrollInfo = {
@@ -83,12 +88,12 @@ function resizeIframe() {
     const iframe = modal.querySelector("iframe");
 
     // 데스크탑에서 길이, 높이 변경 시 iframe의 크기를 조절
-    if(isMobile != true && (width > height)){
-        const iframeHeight = height*0.8;
+    if (isMobile != true && (width > height)) {
+        const iframeHeight = height * 0.8;
         const iframeWidth = (iframeHeight * youtubeIframeInfo.widthRatio) / youtubeIframeInfo.heightRatio;
         iframe.style.width = iframeWidth + "px";
         iframe.style.height = iframeHeight + "px";
-    } else if (isMobile != true && (width < height)){
+    } else if (isMobile != true && (width < height)) {
         const iframeWidth = width * 0.8;
         const iframeHeight = (iframeWidth * youtubeIframeInfo.heightRatio) / youtubeIframeInfo.widthRatio;
         iframe.style.width = iframeWidth + "px";
@@ -97,15 +102,15 @@ function resizeIframe() {
 
     // mobile에서 가로, 세로 모드 전환 시 iframe의 크기를 조절
     // 세로 모드일 때
-    if(isMobile && window.matchMedia("(orientation: portrait)").matches){
+    if (isMobile && window.matchMedia("(orientation: portrait)").matches) {
         const iframeWidth = width * 0.9;
         const iframeHeight = (iframeWidth * youtubeIframeInfo.heightRatio) / youtubeIframeInfo.widthRatio;
         iframe.style.width = iframeWidth + "px";
         iframe.style.height = iframeHeight + "px";
     }
     // 가로 모드일 때
-    else if(isMobile && window.matchMedia("(orientation: landscape)").matches){
-        const iframeHeight = height*0.8;
+    else if (isMobile && window.matchMedia("(orientation: landscape)").matches) {
+        const iframeHeight = height * 0.8;
         const iframeWidth = (iframeHeight * youtubeIframeInfo.widthRatio) / youtubeIframeInfo.heightRatio;
         iframe.style.width = iframeWidth + "px";
         iframe.style.height = iframeHeight + "px";
@@ -123,7 +128,7 @@ function resizeSection() {
 }
 
 resizeSection();
-window.addEventListener("resize", ()=>{
+window.addEventListener("resize", () => {
     resizeSection();
     resizeIframe();
 });
@@ -132,7 +137,7 @@ window.addEventListener("resize", ()=>{
 async function preloadImages() {
     // id변수를 활용해서 /api/centerData/로 데이터를 ajax 요청한다.
     if (infiniteScrollInfo.isfetching) {
-        const contentArea = document.querySelector("#scroll-section-3").querySelector(".content-area");
+        const contentArea = document.querySelector("#scroll-section-4").querySelector(".content-area");
         const rowTag = document.createElement("div")
         let animationDelayTime = 0;
         rowTag.classList.add("row");
@@ -143,7 +148,7 @@ async function preloadImages() {
             if (infiniteScrollInfo.isfetching == false) {
                 break;
             }
-            const response = await  fetch(`/api/memberData/${infiniteScrollInfo.id}`);
+            const response = await fetch(`/api/memberData/${infiniteScrollInfo.id}`);
             const json = await response.json();
             // 데이터가 빈 배열이면 더이상 데이터를 가져오지 않는다.
             if (json.length === 0) {
@@ -155,6 +160,7 @@ async function preloadImages() {
                 const memberYoutubeThumnailPath = info.MemberYoutubeThumbnailLink;
                 const memberText = info.MemberText;
                 const youtubeLink = info.MemberYoutubeLink;
+                const blogLink = info.MemberBlogLink;
 
                 const colTag = document.createElement("div");
                 const cardTag = document.createElement("div");
@@ -163,10 +169,11 @@ async function preloadImages() {
 
                 const cardTitleTag = document.createElement("h5");
                 const cardTextTag = document.createElement("p");
-                
+                const cardBlogTag = document.createElement("a");
+
                 colTag.classList.add("col-md-4");
                 colTag.classList.add("card-default-setting");
-                colTag.classList.add("animation-fadeIn-down");
+                colTag.classList.add("animation-fadeIn-down-bounce");
                 colTag.style.animationDelay = `${animationDelayTime}s`;
 
                 cardTag.classList.add("card");
@@ -178,17 +185,28 @@ async function preloadImages() {
                 cardImageTag.src = `${memberYoutubeThumnailPath}`;
                 cardImageTag.style.width = "100%";
                 cardImageTag.style.height = `${(cardImageTag.style.width * youtubeIframeInfo.heightRatio) / youtubeIframeInfo.widthRatio}px`;
-                
+
                 cardBodyTag.classList.add("card-body");
 
                 cardTitleTag.classList.add("card-title");
                 cardTitleTag.innerText = memberName;
-                
+
                 cardTextTag.classList.add("card-text");
                 cardTextTag.innerText = memberText;
 
+                cardBlogTag.setAttribute("href", `${blogLink}`);
+                cardBlogTag.setAttribute("target", "_blank");
+                cardBlogTag.addEventListener("click", function(event) {
+                    event.stopPropagation();
+                });
+                cardBlogTag.classList.add("btn");
+                cardBlogTag.classList.add("btn-outline-primary");
+                cardBlogTag.classList.add("btn-sm");
+                cardBlogTag.innerHTML = "블로그 보러가기";
+
                 cardBodyTag.appendChild(cardTitleTag);
                 cardBodyTag.appendChild(cardTextTag);
+                cardBodyTag.appendChild(cardBlogTag);
 
                 cardTag.appendChild(cardImageTag);
                 cardTag.appendChild(cardBodyTag);
@@ -198,12 +216,12 @@ async function preloadImages() {
                     const height = window.innerHeight;
                     const iframe = modal.querySelector("iframe");
                     // 가로 모드일 때
-                    if(width > height){
+                    if (width > height) {
                         const iframeHeight = height * 0.8;
                         const iframeWidth = (iframeHeight * youtubeIframeInfo.widthRatio) / youtubeIframeInfo.heightRatio;
                         iframe.style.width = iframeWidth + "px";
                         iframe.style.height = iframeHeight + "px";
-                    }else if(width < height){
+                    } else if (width < height) {
                         const iframeWidth = isMobile ? width * 0.9 : width * 0.8;
                         const iframeHeight = (iframeWidth * youtubeIframeInfo.heightRatio) / youtubeIframeInfo.widthRatio;
                         iframe.style.width = iframeWidth + "px";
@@ -393,6 +411,43 @@ document.addEventListener("scroll", () => {
 
 const intersectionObserverSection3 = new IntersectionObserver((entries, observer) => {
     const [entry] = entries;
+    const contentArea = entry.target.querySelector(".content-area");
+    const sectionTitle = contentArea.querySelector("h2");
+    const buttonDiv = contentArea.querySelector("div");
+    let animationDelayTime = 0.1;
+    // scroll-section-3이 닿으면 title과 버튼을 보여준다.
+    if (entry.isIntersecting) {
+        if (sectionTitle.classList.contains("animation-fadeOut-down")) {
+            sectionTitle.classList.remove("animation-fadeOut-down");
+        }
+        sectionTitle.classList.add("animation-fadeIn-down");
+
+        if (buttonDiv.classList.contains("animation-fadeOut-down")) {
+            buttonDiv.classList.remove("animation-fadeOut-down");
+        }
+        buttonDiv.classList.add("animation-fadeIn-down");
+        buttonDiv.style.animationDelay = `${animationDelayTime}s`;
+    }
+    // scroll-section-3에서 벗어나면 title과 버튼을 숨긴다.
+    else if (entry.isIntersecting == false) {
+        if (sectionTitle.classList.contains("animation-fadeIn-down")) {
+            sectionTitle.classList.remove("animation-fadeIn-down");
+        }
+        sectionTitle.classList.add("animation-fadeOut-down");
+
+        if (buttonDiv.classList.contains("animation-fadeIn-down")) {
+            buttonDiv.classList.remove("animation-fadeIn-down");
+        }
+        buttonDiv.classList.add("animation-fadeOut-down");
+    }
+})
+
+intersectionObserverSection3.observe(document.querySelector("#scroll-section-3"));
+
+
+
+const intersectionObserverSection4 = new IntersectionObserver((entries, observer) => {
+    const [entry] = entries;
     if (entry.isIntersecting) {
         const contentArea = entry.target.querySelector(".content-area");
         const sectionTitle = contentArea.querySelector("h2");
@@ -405,11 +460,11 @@ const intersectionObserverSection3 = new IntersectionObserver((entries, observer
         rows.forEach((row) => {
             const cols = row.querySelectorAll(".col-md-4")
             cols.forEach((col) => {
-                if (col.classList.contains("animation-fadeOut-down")) {
-                    col.classList.remove("animation-fadeOut-down");
+                if (col.classList.contains("animation-fadeOut-down-bounce")) {
+                    col.classList.remove("animation-fadeOut-down-bounce");
                 }
-                if (col.classList.contains("animation-fadeIn-down") != true) {
-                    col.classList.add("animation-fadeIn-down");
+                if (col.classList.contains("animation-fadeIn-down-bounce") != true) {
+                    col.classList.add("animation-fadeIn-down-bounce");
                     col.style.animationDelay = `${animationDelayTime}s`;
                     animationDelayTime += 0.1;
                 }
@@ -428,21 +483,21 @@ const intersectionObserverSection3 = new IntersectionObserver((entries, observer
         rows.forEach((row) => {
             const cols = row.querySelectorAll(".col-md-4")
             cols.forEach((col) => {
-                if (col.classList.contains("animation-fadeIn-down")) {
-                    col.classList.remove("animation-fadeIn-down");
-                    col.classList.add("animation-fadeOut-down");
+                if (col.classList.contains("animation-fadeIn-down-bounce")) {
+                    col.classList.remove("animation-fadeIn-down-bounce");
+                    col.classList.add("animation-fadeOut-down-bounce");
                 }
             })
         })
     }
-},)
+})
 
-intersectionObserverSection3.observe(document.querySelector("#scroll-section-3"));
+intersectionObserverSection4.observe(document.querySelector("#scroll-section-4"));
 
 const intersectionObserverUnlimitedScroll = new IntersectionObserver(async (entries, observer) => {
     const [entry] = entries;
     if (entry.isIntersecting && infiniteScrollInfo.isfetching) {
-        const contentArea = document.querySelector("#scroll-section-3").querySelector(".content-area");
+        const contentArea = document.querySelector("#scroll-section-4").querySelector(".content-area");
         const rowTag = document.createElement("div")
         let animationDelayTime = 0;
         rowTag.classList.add("row");
@@ -465,6 +520,7 @@ const intersectionObserverUnlimitedScroll = new IntersectionObserver(async (entr
                 const memberYoutubeThumnailPath = info.MemberYoutubeThumbnailLink;
                 const memberText = info.MemberText;
                 const youtubeLink = info.MemberYoutubeLink;
+                const blogLink = info.MemberBlogLink;
 
                 const colTag = document.createElement("div");
                 const cardTag = document.createElement("div");
@@ -473,10 +529,11 @@ const intersectionObserverUnlimitedScroll = new IntersectionObserver(async (entr
 
                 const cardTitleTag = document.createElement("h5");
                 const cardTextTag = document.createElement("p");
-                
+                const cardBlogTag = document.createElement("a");
+
                 colTag.classList.add("col-md-4");
                 colTag.classList.add("card-default-setting");
-                colTag.classList.add("animation-fadeIn-down");
+                colTag.classList.add("animation-fadeIn-down-bounce");
                 colTag.style.animationDelay = `${animationDelayTime}s`;
 
                 cardTag.classList.add("card");
@@ -493,12 +550,23 @@ const intersectionObserverUnlimitedScroll = new IntersectionObserver(async (entr
 
                 cardTitleTag.classList.add("card-title");
                 cardTitleTag.innerText = memberName;
-                
+
                 cardTextTag.classList.add("card-text");
                 cardTextTag.innerText = memberText;
 
+                cardBlogTag.setAttribute("href", `${blogLink}`);
+                cardBlogTag.setAttribute("target", "_blank");
+                cardBlogTag.addEventListener("click", function(event) {
+                    event.stopPropagation();
+                });
+                cardBlogTag.classList.add("btn");
+                cardBlogTag.classList.add("btn-outline-primary");
+                cardBlogTag.classList.add("btn-sm");
+                cardBlogTag.innerHTML = "블로그 보러가기";
+
                 cardBodyTag.appendChild(cardTitleTag);
                 cardBodyTag.appendChild(cardTextTag);
+                cardBodyTag.appendChild(cardBlogTag);
 
                 cardTag.appendChild(cardImageTag);
                 cardTag.appendChild(cardBodyTag);
@@ -508,12 +576,12 @@ const intersectionObserverUnlimitedScroll = new IntersectionObserver(async (entr
                     const height = window.innerHeight;
                     const iframe = modal.querySelector("iframe");
                     // 가로 모드일 때
-                    if(width > height){
+                    if (width > height) {
                         const iframeHeight = height * 0.8;
                         const iframeWidth = (iframeHeight * youtubeIframeInfo.widthRatio) / youtubeIframeInfo.heightRatio;
                         iframe.style.width = iframeWidth + "px";
                         iframe.style.height = iframeHeight + "px";
-                    }else if(width < height){
+                    } else if (width < height) {
                         const iframeWidth = isMobile ? width * 0.9 : width * 0.8;
                         const iframeHeight = (iframeWidth * youtubeIframeInfo.heightRatio) / youtubeIframeInfo.widthRatio;
                         iframe.style.width = iframeWidth + "px";
