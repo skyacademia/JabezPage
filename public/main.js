@@ -40,7 +40,7 @@ const sectionInfo = [
     },
     {
         // section-3
-        multipleValue: 1,
+        multipleValue: 1.1,
         obj: document.querySelector("#scroll-section-3"),
     },
     {
