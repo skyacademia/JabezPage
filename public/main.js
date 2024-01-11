@@ -17,25 +17,17 @@ const sectionInfo = [
     },
     {
         // section-2
-        multipleValue: 6,
+        multipleValue: 3,
         obj: document.querySelector("#scroll-section-2"),
         values: {
-            message1_fadeIn_opacity: [0, 1, { start: 0, end: 0.07 }],
-            message1_fadeIn_transform: [10, 0, { start: 0, end: 0.07 }],
-            message1_fadeOut_opacity: [1, 0, { start: 0.09, end: 0.16 }],
-            message1_fadeOut_transform: [0, -10, { start: 0.09, end: 0.16 }],
-            message2_fadeIn_opacity: [0, 1, { start: 0.18, end: 0.25 }],
-            message2_fadeIn_transform: [10, 0, { start: 0.18, end: 0.25 }],
-            message2_fadeOut_opacity: [1, 0, { start: 0.27, end: 0.34 }],
-            message2_fadeOut_transform: [0, -10, { start: 0.27, end: 0.34 }],
-            message3_fadeIn_opacity: [0, 1, { start: 0.36, end: 0.43 }],
-            message3_fadeIn_transform: [10, 0, { start: 0.36, end: 0.43 }],
-            message3_fadeOut_opacity: [1, 0, { start: 0.45, end: 0.52 }],
-            message3_fadeOut_transform: [0, -10, { start: 0.45, end: 0.52 }],
-            message4_fadeIn_opacity: [0, 1, { start: 0.54, end: 0.61 }],
-            message4_fadeIn_transform: [10, 0, { start: 0.54, end: 0.61 }],
-            message4_fadeOut_opacity: [1, 0, { start: 0.63, end: 0.7 }],
-            message4_fadeOut_transform: [0, -10, { start: 0.63, end: 0.7 }],
+            message1_fadeIn_opacity: [0, 1, { start: 0, end: 0.14 }],
+            message1_fadeIn_transform: [10, 0, { start: 0, end: 0.14 }],
+            message1_fadeOut_opacity: [1, 0, { start: 0.18, end: 0.32 }],
+            message1_fadeOut_transform: [0, -10, { start: 0.18, end: 0.32 }],
+            message2_fadeIn_opacity: [0, 1, { start: 0.34, end: 0.48 }],
+            message2_fadeIn_transform: [10, 0, { start: 0.34, end: 0.48 }],
+            message2_fadeOut_opacity: [1, 0, { start: 0.52, end: 0.66 }],
+            message2_fadeOut_transform: [0, -10, { start: 0.52, end: 0.66 }],
         }
     },
     {
@@ -197,7 +189,8 @@ async function preloadImages() {
                 cardImageTag.classList.add("card-img-top");
                 cardImageTag.src = `${memberYoutubeThumnailPath}`;
                 cardImageTag.style.width = "100%";
-                cardImageTag.style.height = `${(cardImageTag.style.width * youtubeIframeInfo.heightRatio) / youtubeIframeInfo.widthRatio}px`;
+                // cardImageTag.style.height = `${(cardImageTag.style.width * youtubeIframeInfo.heightRatio) / youtubeIframeInfo.widthRatio}px`;
+                cardImageTag.style.height = `14.5rem`;
 
                 cardBodyTag.classList.add("card-body");
 
@@ -349,42 +342,19 @@ function playAnimation(activeSectionIndex, previousHeight) {
                 const message2_fadeIn_transition_value = calculateValue(sectionValues.message2_fadeIn_transform, scrollInSection, activeSectionHeight);
                 const message2_fadeOut_opacity_value = calculateValue(sectionValues.message2_fadeOut_opacity, scrollInSection, activeSectionHeight);
                 const message2_fadeOut_transition_value = calculateValue(sectionValues.message2_fadeOut_transform, scrollInSection, activeSectionHeight);
-                const message3_fadeIn_opacity_value = calculateValue(sectionValues.message3_fadeIn_opacity, scrollInSection, activeSectionHeight);
-                const message3_fadeIn_transition_value = calculateValue(sectionValues.message3_fadeIn_transform, scrollInSection, activeSectionHeight);
-                const message3_fadeOut_opacity_value = calculateValue(sectionValues.message3_fadeOut_opacity, scrollInSection, activeSectionHeight);
-                const message3_fadeOut_transition_value = calculateValue(sectionValues.message3_fadeOut_transform, scrollInSection, activeSectionHeight);
-                const message4_fadeIn_opacity_value = calculateValue(sectionValues.message4_fadeIn_opacity, scrollInSection, activeSectionHeight);
-                const message4_fadeIn_transition_value = calculateValue(sectionValues.message4_fadeIn_transform, scrollInSection, activeSectionHeight);
-                const message4_fadeOut_opacity_value = calculateValue(sectionValues.message4_fadeOut_opacity, scrollInSection, activeSectionHeight);
-                const message4_fadeOut_transition_value = calculateValue(sectionValues.message4_fadeOut_transform, scrollInSection, activeSectionHeight);
-
-                if (scrollRateInSection <= 0.08) {
+                if (scrollRateInSection <= 0.16) {
                     contentList[0].style.opacity = message1_fadeIn_opacity_value;
                     contentList[0].style.transform = `translate(0,${message1_fadeIn_transition_value}%)`;
                 } else {
                     contentList[0].style.opacity = message1_fadeOut_opacity_value;
                     contentList[0].style.transform = `translate(0,${message1_fadeOut_transition_value}%)`;
                 }
-                if (scrollRateInSection <= 0.26) {
+                if (scrollRateInSection <= 0.50) {
                     contentList[1].style.opacity = message2_fadeIn_opacity_value;
                     contentList[1].style.transform = `translate(0,${message2_fadeIn_transition_value}%)`;
                 } else {
                     contentList[1].style.opacity = message2_fadeOut_opacity_value;
                     contentList[1].style.transform = `translate(0,${message2_fadeOut_transition_value}%)`;
-                }
-                if (scrollRateInSection <= 0.44) {
-                    contentList[2].style.opacity = message3_fadeIn_opacity_value;
-                    contentList[2].style.transform = `translate(0,${message3_fadeIn_transition_value}%)`;
-                } else {
-                    contentList[2].style.opacity = message3_fadeOut_opacity_value;
-                    contentList[2].style.transform = `translate(0,${message3_fadeOut_transition_value}%)`;
-                }
-                if (scrollRateInSection <= 0.62) {
-                    contentList[3].style.opacity = message4_fadeIn_opacity_value;
-                    contentList[3].style.transform = `translate(0,${message4_fadeIn_transition_value}%)`;
-                } else {
-                    contentList[3].style.opacity = message4_fadeOut_opacity_value;
-                    contentList[3].style.transform = `translate(0,${message4_fadeOut_transition_value}%)`;
                 }
                 break;
             }
