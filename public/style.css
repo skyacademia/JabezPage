@@ -24,11 +24,9 @@ nav {
     transition: all 0.5s;
 }
 
-#scroll-section-1,
-#scroll-section-2 {
-    padding: 0;
+#scroll-section-3 .content {
+    opacity: 0;
 }
-
 #scroll-section-4 {
     background-color: blanchedalmond;
     background-size: cover;
@@ -81,8 +79,8 @@ nav {
     animation-fill-mode: forwards;
 }
 
-#scroll-section-1 .content h1:not(.stickyMessage),
-#scroll-section-2 .content h1 {
+#scroll-section-1 .content,
+#scroll-section-2 .content{
     opacity: 0;
 }
 

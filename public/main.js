@@ -57,7 +57,22 @@ const youtubeIframeInfo = {
     widthRatio: 16,
     heightRatio: 9,
 }
+const touchInfo = {
+    startY: 0,
+    endY: 0,
+}
+
 const modal = document.getElementById("myModal");
+const messages = []
+sectionInfo[0].obj.querySelectorAll(".content").forEach((content) => {
+    messages.push(content);
+});
+sectionInfo[1].obj.querySelectorAll(".content").forEach((content) => {
+    messages.push(content);
+});
+messages.push(sectionInfo[2].obj.querySelector(".content-area"));
+let currentDivIndex=0;
+
 
 window.addEventListener("click", function (event) {
     if (event.target == modal) {
@@ -119,14 +134,12 @@ function resizeIframe() {
 
 // resize 이벤트 발생 시 section의 높이를 조절
 function resizeSection() {
-    // section-1, section-2, section-3의 높이 설정
     for (let i = 0; i < sectionInfo.length; i++) {
         if (sectionInfo[i].multipleValue > 0) {
             sectionInfo[i].obj.style.height = `${sectionInfo[i].multipleValue * window.innerHeight}px`;
         }
     }
 }
-
 resizeSection();
 window.addEventListener("resize", () => {
     resizeSection();
@@ -250,8 +263,19 @@ async function preloadImages() {
         }
     }
 }
-window.addEventListener("load", () => {
+
+history.scrollRestoration = "manual";
+window.addEventListener("load", (e) => {
     preloadImages()
+    if(isMobile){
+        document.body.style.overflow = "hidden";
+        for(let i=0; i<2; i++){
+            sectionInfo[i].obj.querySelectorAll(".content").forEach((content) => {
+                content.style.height = `${window.innerHeight}px`;
+            });
+        }
+        sectionInfo[2].obj.querySelector(".content-area").style.height = `${window.innerHeight}px`;
+    }
 })
 
 function calculateValue(animationValues, scrollInSection, activedSectionHeight) {
@@ -300,18 +324,18 @@ function playAnimation(activeSectionIndex, previousHeight) {
                 const message2_fadeOut_transition_value = calculateValue(sectionValues.message2_fadeOut_transform, scrollInSection, activeSectionHeight);
 
                 if (scrollRateInSection <= 0.16) {
-                    contentList[0].querySelector('.message-1').style.opacity = message1_fadeIn_opacity_value;
-                    contentList[0].querySelector('.message-1').style.transform = `translate(0,${message1_fadeIn_transition_value}%)`;
+                    contentList[0].style.opacity = message1_fadeIn_opacity_value;
+                    contentList[0].style.transform = `translate(0,${message1_fadeIn_transition_value}%)`;
                 } else {
-                    contentList[0].querySelector('.message-1').style.opacity = message1_fadeOut_opacity_value;
-                    contentList[0].querySelector('.message-1').style.transform = `translate(0,${message1_fadeOut_transition_value}%)`;
+                    contentList[0].style.opacity = message1_fadeOut_opacity_value;
+                    contentList[0].style.transform = `translate(0,${message1_fadeOut_transition_value}%)`;
                 }
                 if (scrollRateInSection <= 0.50) {
-                    contentList[1].querySelector('.message-2').style.opacity = message2_fadeIn_opacity_value;
-                    contentList[1].querySelector('.message-2').style.transform = `translate(0,${message2_fadeIn_transition_value}%)`;
+                    contentList[1].style.opacity = message2_fadeIn_opacity_value;
+                    contentList[1].style.transform = `translate(0,${message2_fadeIn_transition_value}%)`;
                 } else {
-                    contentList[1].querySelector('.message-2').style.opacity = message2_fadeOut_opacity_value;
-                    contentList[1].querySelector('.message-2').style.transform = `translate(0,${message2_fadeOut_transition_value}%)`;
+                    contentList[1].style.opacity = message2_fadeOut_opacity_value;
+                    contentList[1].style.transform = `translate(0,${message2_fadeOut_transition_value}%)`;
                 }
                 break;
             }
@@ -335,32 +359,32 @@ function playAnimation(activeSectionIndex, previousHeight) {
                 const message4_fadeOut_transition_value = calculateValue(sectionValues.message4_fadeOut_transform, scrollInSection, activeSectionHeight);
 
                 if (scrollRateInSection <= 0.08) {
-                    contentList[0].querySelector('.message-1').style.opacity = message1_fadeIn_opacity_value;
-                    contentList[0].querySelector('.message-1').style.transform = `translate(0,${message1_fadeIn_transition_value}%)`;
+                    contentList[0].style.opacity = message1_fadeIn_opacity_value;
+                    contentList[0].style.transform = `translate(0,${message1_fadeIn_transition_value}%)`;
                 } else {
-                    contentList[0].querySelector('.message-1').style.opacity = message1_fadeOut_opacity_value;
-                    contentList[0].querySelector('.message-1').style.transform = `translate(0,${message1_fadeOut_transition_value}%)`;
+                    contentList[0].style.opacity = message1_fadeOut_opacity_value;
+                    contentList[0].style.transform = `translate(0,${message1_fadeOut_transition_value}%)`;
                 }
                 if (scrollRateInSection <= 0.26) {
-                    contentList[1].querySelector('.message-2').style.opacity = message2_fadeIn_opacity_value;
-                    contentList[1].querySelector('.message-2').style.transform = `translate(0,${message2_fadeIn_transition_value}%)`;
+                    contentList[1].style.opacity = message2_fadeIn_opacity_value;
+                    contentList[1].style.transform = `translate(0,${message2_fadeIn_transition_value}%)`;
                 } else {
-                    contentList[1].querySelector('.message-2').style.opacity = message2_fadeOut_opacity_value;
-                    contentList[1].querySelector('.message-2').style.transform = `translate(0,${message2_fadeOut_transition_value}%)`;
+                    contentList[1].style.opacity = message2_fadeOut_opacity_value;
+                    contentList[1].style.transform = `translate(0,${message2_fadeOut_transition_value}%)`;
                 }
                 if (scrollRateInSection <= 0.44) {
-                    contentList[2].querySelector('.message-3').style.opacity = message3_fadeIn_opacity_value;
-                    contentList[2].querySelector('.message-3').style.transform = `translate(0,${message3_fadeIn_transition_value}%)`;
+                    contentList[2].style.opacity = message3_fadeIn_opacity_value;
+                    contentList[2].style.transform = `translate(0,${message3_fadeIn_transition_value}%)`;
                 } else {
-                    contentList[2].querySelector('.message-3').style.opacity = message3_fadeOut_opacity_value;
-                    contentList[2].querySelector('.message-3').style.transform = `translate(0,${message3_fadeOut_transition_value}%)`;
+                    contentList[2].style.opacity = message3_fadeOut_opacity_value;
+                    contentList[2].style.transform = `translate(0,${message3_fadeOut_transition_value}%)`;
                 }
                 if (scrollRateInSection <= 0.62) {
-                    contentList[3].querySelector('.message-4').style.opacity = message4_fadeIn_opacity_value;
-                    contentList[3].querySelector('.message-4').style.transform = `translate(0,${message4_fadeIn_transition_value}%)`;
+                    contentList[3].style.opacity = message4_fadeIn_opacity_value;
+                    contentList[3].style.transform = `translate(0,${message4_fadeIn_transition_value}%)`;
                 } else {
-                    contentList[3].querySelector('.message-4').style.opacity = message4_fadeOut_opacity_value;
-                    contentList[3].querySelector('.message-4').style.transform = `translate(0,${message4_fadeOut_transition_value}%)`;
+                    contentList[3].style.opacity = message4_fadeOut_opacity_value;
+                    contentList[3].style.transform = `translate(0,${message4_fadeOut_transition_value}%)`;
                 }
                 break;
             }
@@ -402,14 +426,83 @@ function controlNavbar() {
     lastScrollTop = scrollTop;
 }
 
-document.addEventListener("scroll", () => {
+function moveToNextDiv() {
+    if (currentDivIndex < messages.length - 1) {
+        currentDivIndex++;
+        if(messages[currentDivIndex].classList.contains("animation-fadeOut-down")){
+            messages[currentDivIndex].classList.remove("animation-fadeOut-down");
+        }
+        messages[currentDivIndex].scrollIntoView({ behavior: 'smooth' });
+        messages[currentDivIndex].classList.add("animation-fadeIn-down");
+        messages[currentDivIndex].classList.add("animation-fadeIn-down");
+
+    }
+    
+}
+function moveToPreviousDiv() {
+    if (currentDivIndex > 0) {
+        currentDivIndex--;
+        if(messages[currentDivIndex].classList.contains("animation-fadeOut-down")){
+            messages[currentDivIndex].classList.remove("animation-fadeOut-down");
+        }
+        messages[currentDivIndex].scrollIntoView({ behavior: 'smooth' });
+        messages[currentDivIndex].classList.add("animation-fadeIn-down");
+        messages[currentDivIndex].classList.add("animation-fadeIn-down");
+
+    }
+}
+
+document.addEventListener("scroll", (e) => {
     const activeSectionIndex = findActiveSection();
     const previousHeight = calculatePriviousHeight(activeSectionIndex);
     playAnimation(activeSectionIndex, previousHeight);
     controlNavbar();
 });
 
+if(isMobile){
+    document.addEventListener("touchstart", (e) => {
+        const touch = e.touches[0];
+        touchInfo.startY = touch.clientY;
+    });
+    document.addEventListener("touchend", (e) => {
+        const touch = e.changedTouches[0];
+        const target = e.target;
+        const targetElement = target instanceof Element ? target : null;
+        touchInfo.endY = touch.clientY;
+        const navbar = document.querySelector(".navbar");
+
+        if(targetElement.closest("#scroll-section-3") != null || targetElement.closest("#scroll-section-4") != null){
+            return;
+        }
+        if(document.body.style.overflow != "hidden"){
+            document.body.style.overflow = "hidden";
+        }
+
+        if (touchInfo.endY - touchInfo.startY > 50) {
+            if (messages[currentDivIndex].classList.contains("animation-fadeIn-down")) {
+                messages[currentDivIndex].classList.remove("animation-fadeIn-down");
+            }
+            messages[currentDivIndex].classList.add("animation-fadeOut-down");
+            moveToPreviousDiv();
+            navbar.style.top = "0"; // 스크롤을 올릴 때 nav를 보임
+
+        } else if (touchInfo.startY - touchInfo.endY > 50) {
+            if (messages[currentDivIndex].classList.contains("animation-fadeIn-down")) {
+                messages[currentDivIndex].classList.remove("animation-fadeIn-down");
+            }
+            messages[currentDivIndex].classList.add("animation-fadeOut-down");
+            moveToNextDiv();
+            navbar.style.top = `-76px`; // 스크롤을 내릴 때 nav를 숨김
+        }
+    });
+}
+  
+
+
 const intersectionObserverSection3 = new IntersectionObserver((entries, observer) => {
+    if(isMobile &&document.body.style.overflow == "hidden"){
+        document.body.style.overflow = "visible";
+    }
     const [entry] = entries;
     const contentArea = entry.target.querySelector(".content-area");
     const sectionTitle = contentArea.querySelector("h2");
@@ -440,7 +533,7 @@ const intersectionObserverSection3 = new IntersectionObserver((entries, observer
         }
         buttonDiv.classList.add("animation-fadeOut-down");
     }
-})
+},{ threshold: 0.5 })
 
 intersectionObserverSection3.observe(document.querySelector("#scroll-section-3"));
 
