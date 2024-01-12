@@ -2,7 +2,7 @@ const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent); // 안�
 const sectionInfo = [
     {
         // section-1
-        multipleValue: 3,
+        multipleValue: isMobile ? 6 : 3,
         obj: document.querySelector("#scroll-section-1"),
         values: {
             message1_fadeIn_opacity: [0, 1, { start: 0, end: 0.14 }],
@@ -17,7 +17,7 @@ const sectionInfo = [
     },
     {
         // section-2
-        multipleValue: 3,
+        multipleValue: isMobile ? 6 : 3,
         obj: document.querySelector("#scroll-section-2"),
         values: {
             message1_fadeIn_opacity: [0, 1, { start: 0, end: 0.14 }],
@@ -243,7 +243,6 @@ history.scrollRestoration = "manual";
 window.addEventListener("load", (e) => {
     preloadImages()
     if(isMobile){
-        document.body.style.overflow = "hidden";
         for(let i=0; i<2; i++){
             sectionInfo[i].obj.querySelectorAll(".content").forEach((content) => {
                 content.style.height = `${window.innerHeight}px`;
@@ -411,43 +410,43 @@ document.addEventListener("scroll", (e) => {
     controlNavbar();
 });
 
-if(isMobile){
-    document.addEventListener("touchstart", (e) => {
-        const touch = e.touches[0];
-        touchInfo.startY = touch.clientY;
-    });
-    document.addEventListener("touchend", (e) => {
-        const touch = e.changedTouches[0];
-        const target = e.target;
-        const targetElement = target instanceof Element ? target : null;
-        touchInfo.endY = touch.clientY;
-        const navbar = document.querySelector(".navbar");
+// if(isMobile){
+//     document.addEventListener("touchstart", (e) => {
+//         const touch = e.touches[0];
+//         touchInfo.startY = touch.clientY;
+//     });
+//     document.addEventListener("touchend", (e) => {
+//         const touch = e.changedTouches[0];
+//         const target = e.target;
+//         const targetElement = target instanceof Element ? target : null;
+//         touchInfo.endY = touch.clientY;
+//         const navbar = document.querySelector(".navbar");
 
-        if(targetElement.closest("#scroll-section-3") != null || targetElement.closest("#scroll-section-4") != null){
-            return;
-        }
-        if(document.body.style.overflow != "hidden"){
-            document.body.style.overflow = "hidden";
-        }
+//         if(targetElement.closest("#scroll-section-3") != null || targetElement.closest("#scroll-section-4") != null){
+//             return;
+//         }
+//         if(document.body.style.overflow != "hidden"){
+//             document.body.style.overflow = "hidden";
+//         }
 
-        if (touchInfo.endY - touchInfo.startY > 50) {
-            if (messages[currentDivIndex].classList.contains("animation-fadeIn-down")) {
-                messages[currentDivIndex].classList.remove("animation-fadeIn-down");
-            }
-            messages[currentDivIndex].classList.add("animation-fadeOut-down");
-            moveToPreviousDiv();
-            navbar.style.top = "0"; // 스크롤을 올릴 때 nav를 보임
+//         if (touchInfo.endY - touchInfo.startY > 50) {
+//             if (messages[currentDivIndex].classList.contains("animation-fadeIn-down")) {
+//                 messages[currentDivIndex].classList.remove("animation-fadeIn-down");
+//             }
+//             messages[currentDivIndex].classList.add("animation-fadeOut-down");
+//             moveToPreviousDiv();
+//             navbar.style.top = "0"; // 스크롤을 올릴 때 nav를 보임
 
-        } else if (touchInfo.startY - touchInfo.endY > 50) {
-            if (messages[currentDivIndex].classList.contains("animation-fadeIn-down")) {
-                messages[currentDivIndex].classList.remove("animation-fadeIn-down");
-            }
-            messages[currentDivIndex].classList.add("animation-fadeOut-down");
-            moveToNextDiv();
-            navbar.style.top = `-76px`; // 스크롤을 내릴 때 nav를 숨김
-        }
-    });
-}
+//         } else if (touchInfo.startY - touchInfo.endY > 50) {
+//             if (messages[currentDivIndex].classList.contains("animation-fadeIn-down")) {
+//                 messages[currentDivIndex].classList.remove("animation-fadeIn-down");
+//             }
+//             messages[currentDivIndex].classList.add("animation-fadeOut-down");
+//             moveToNextDiv();
+//             navbar.style.top = `-76px`; // 스크롤을 내릴 때 nav를 숨김
+//         }
+//     });
+// }
   
 
 
