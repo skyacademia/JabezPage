@@ -50,8 +50,8 @@ const messageInfo = [
         values: {
             message1_fadeIn: { start: 0, end: 0.14 },
             message1_fadeOut: { start: 0.18, end: 0.32 },
-            message2_fadeIn: { start: 0.34, end: 0.48 },
-            message2_fadeOut: { start: 0.52, end: 0.66 },
+            message2_fadeIn: { start: 0.44, end: 0.58 },
+            message2_fadeOut: { start: 0.62, end: 0.76 },
         }
 
     },
@@ -62,8 +62,8 @@ const messageInfo = [
         values: {
             message1_fadeIn: { start: 0, end: 0.14 },
             message1_fadeOut: { start: 0.18, end: 0.32 },
-            message2_fadeIn: { start: 0.34, end: 0.48 },
-            message2_fadeOut: { start: 0.52, end: 0.66 },
+            message2_fadeIn: { start: 0.44, end: 0.58 },
+            message2_fadeOut: { start: 0.62, end: 0.76 },
         }
 
     },
@@ -405,7 +405,7 @@ function playMobileAnimation(activeSectionIndex, previousHeight, direction) {
                         }
                     }
                 }
-                if (animationValues.message1_fadeOut.end<scrollRateInSection && scrollRateInSection<= animationValues.message1_fadeOut.end+0.01) {
+                if (animationValues.message1_fadeOut.end<scrollRateInSection && scrollRateInSection<animationValues.message2_fadeIn.start) {
                     if(direction == 1){
                         if (message2.classList.contains("animation-fadeOut-down")) {
                             message2.classList.remove("animation-fadeOut-down");
@@ -503,7 +503,7 @@ function playMobileAnimation(activeSectionIndex, previousHeight, direction) {
                         }
                     }
                 }
-                if (animationValues.message1_fadeOut.end<scrollRateInSection && scrollRateInSection<= animationValues.message1_fadeOut.end+0.01) {
+                if (animationValues.message1_fadeOut.end<scrollRateInSection && scrollRateInSection<= animationValues.message2_fadeIn.start) {
                     if(direction == 1){
                         if (message2.classList.contains("animation-fadeOut-down")) {
                             message2.classList.remove("animation-fadeOut-down");
@@ -615,77 +615,6 @@ document.addEventListener("scroll", (e) => {
         
     }
 });
-
-// document.addEventListener("touchstart", (e) => {
-//     const touch = e.touches[0];
-//     touchInfo.startY = touch.clientY;
-//     console.log("touchstart : ", touchInfo.startY);
-// });
-
-// 모바일이면 messageObjs이 뷰포트에 완전히 닿으면 애니메이션을 실행하는 클래스를 추가하는 observer를 생성한다.
-// if (isMobile) {
-//     const intersectionObserverMessage = new IntersectionObserver((entries, observer) => {
-//         entries.forEach((entry) => {
-//             const messageElement = entry.target;
-//             if (messageElement.isIntersecting) {
-//                 if (messageElement.classList.contains("animation-fadeOut-down")) {
-//                     messageElement.classList.remove("animation-fadeOut-down");
-//                 }
-//                 messageElement.classList.add("animation-fadeIn-down");
-//             }
-//             else if (messageElement.isIntersecting == false) {
-//                 if (messageElement.classList.contains("animation-fadeIn-down")) {
-//                     messageElement.classList.remove("animation-fadeIn-down");
-//                 }
-//                 messageElement.classList.add("animation-fadeOut-down");
-//             }
-//         })
-//     }, { threshold: 1.0 });
-
-//     messageInfo.forEach((content) => {
-//         intersectionObserverMessage.observe(content);
-//     })
-// }
-
-
-// if(isMobile){
-//     document.addEventListener("touchstart", (e) => {
-//         const touch = e.touches[0];
-//         touchInfo.startY = touch.clientY;
-//     });
-//     document.addEventListener("touchend", (e) => {
-//         const touch = e.changedTouches[0];
-//         const target = e.target;
-//         const targetElement = target instanceof Element ? target : null;
-//         touchInfo.endY = touch.clientY;
-//         const navbar = document.querySelector(".navbar");
-
-//         if(targetElement.closest("#scroll-section-3") != null || targetElement.closest("#scroll-section-4") != null){
-//             return;
-//         }
-//         if(document.body.style.overflow != "hidden"){
-//             document.body.style.overflow = "hidden";
-//         }
-
-//         if (touchInfo.endY - touchInfo.startY > 50) {
-//             if (messages[currentDivIndex].classList.contains("animation-fadeIn-down")) {
-//                 messages[currentDivIndex].classList.remove("animation-fadeIn-down");
-//             }
-//             messages[currentDivIndex].classList.add("animation-fadeOut-down");
-//             moveToPreviousDiv();
-//             navbar.style.top = "0"; // 스크롤을 올릴 때 nav를 보임
-
-//         } else if (touchInfo.startY - touchInfo.endY > 50) {
-//             if (messages[currentDivIndex].classList.contains("animation-fadeIn-down")) {
-//                 messages[currentDivIndex].classList.remove("animation-fadeIn-down");
-//             }
-//             messages[currentDivIndex].classList.add("animation-fadeOut-down");
-//             moveToNextDiv();
-//             navbar.style.top = `-76px`; // 스크롤을 내릴 때 nav를 숨김
-//         }
-//     });
-// }
-
 
 const intersectionObserverSection3 = new IntersectionObserver((entries, observer) => {
     const [entry] = entries;
