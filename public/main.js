@@ -50,8 +50,8 @@ const messageInfo = [
         values: {
             message1_fadeIn: { start: 0, end: 0.14 },
             message1_fadeOut: { start: 0.18, end: 0.32 },
-            message2_fadeIn: { start: 0.44, end: 0.58 },
-            message2_fadeOut: { start: 0.62, end: 0.76 },
+            message2_fadeIn: { start: 0.54, end: 0.68 },
+            message2_fadeOut: { start: 0.72, end: 0.86 },
         }
 
     },
@@ -62,8 +62,8 @@ const messageInfo = [
         values: {
             message1_fadeIn: { start: 0, end: 0.14 },
             message1_fadeOut: { start: 0.18, end: 0.32 },
-            message2_fadeIn: { start: 0.44, end: 0.58 },
-            message2_fadeOut: { start: 0.62, end: 0.76 },
+            message2_fadeIn: { start: 0.54, end: 0.68 },
+            message2_fadeOut: { start: 0.72, end: 0.86 },
         }
 
     },
