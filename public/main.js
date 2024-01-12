@@ -161,11 +161,10 @@ async function preloadImages() {
                 return;
             }
             json.forEach((info) => {
-                const memberName = info.MemberName;
+                const memberYoutubeTitle = info.MemberYoutubeTitle;
                 const memberYoutubeThumnailPath = info.MemberYoutubeThumbnailLink;
                 const memberText = info.MemberText;
                 const youtubeLink = info.MemberYoutubeLink;
-                const blogLink = info.MemberBlogLink;
 
                 const colTag = document.createElement("div");
                 const cardTag = document.createElement("div");
@@ -173,8 +172,6 @@ async function preloadImages() {
                 const cardBodyTag = document.createElement("div");
 
                 const cardTitleTag = document.createElement("h5");
-                const cardTextTag = document.createElement("p");
-                const cardBlogTag = document.createElement("a");
 
                 colTag.classList.add("col-md-4");
                 colTag.classList.add("card-default-setting");
@@ -195,24 +192,9 @@ async function preloadImages() {
                 cardBodyTag.classList.add("card-body");
 
                 cardTitleTag.classList.add("card-title");
-                cardTitleTag.innerText = memberName;
-
-                cardTextTag.classList.add("card-text");
-                cardTextTag.innerText = memberText;
-
-                cardBlogTag.setAttribute("href", `${blogLink}`);
-                cardBlogTag.setAttribute("target", "_blank");
-                cardBlogTag.addEventListener("click", function(event) {
-                    event.stopPropagation();
-                });
-                cardBlogTag.classList.add("btn");
-                cardBlogTag.classList.add("btn-outline-primary");
-                cardBlogTag.classList.add("btn-sm");
-                cardBlogTag.innerHTML = "블로그 보러가기";
+                cardTitleTag.innerText = memberYoutubeTitle;
 
                 cardBodyTag.appendChild(cardTitleTag);
-                cardBodyTag.appendChild(cardTextTag);
-                cardBodyTag.appendChild(cardBlogTag);
 
                 cardTag.appendChild(cardImageTag);
                 cardTag.appendChild(cardBodyTag);
@@ -579,11 +561,9 @@ const intersectionObserverUnlimitedScroll = new IntersectionObserver(async (entr
                 return;
             }
             json.forEach((info) => {
-                const memberName = info.MemberName;
+                const memberYoutubeTitle = info.MemberYoutubeTitle;
                 const memberYoutubeThumnailPath = info.MemberYoutubeThumbnailLink;
-                const memberText = info.MemberText;
                 const youtubeLink = info.MemberYoutubeLink;
-                const blogLink = info.MemberBlogLink;
 
                 const colTag = document.createElement("div");
                 const cardTag = document.createElement("div");
@@ -591,8 +571,6 @@ const intersectionObserverUnlimitedScroll = new IntersectionObserver(async (entr
                 const cardBodyTag = document.createElement("div");
 
                 const cardTitleTag = document.createElement("h5");
-                const cardTextTag = document.createElement("p");
-                const cardBlogTag = document.createElement("a");
 
                 colTag.classList.add("col-md-4");
                 colTag.classList.add("card-default-setting");
@@ -612,24 +590,9 @@ const intersectionObserverUnlimitedScroll = new IntersectionObserver(async (entr
                 cardBodyTag.classList.add("card-body");
 
                 cardTitleTag.classList.add("card-title");
-                cardTitleTag.innerText = memberName;
-
-                cardTextTag.classList.add("card-text");
-                cardTextTag.innerText = memberText;
-
-                cardBlogTag.setAttribute("href", `${blogLink}`);
-                cardBlogTag.setAttribute("target", "_blank");
-                cardBlogTag.addEventListener("click", function(event) {
-                    event.stopPropagation();
-                });
-                cardBlogTag.classList.add("btn");
-                cardBlogTag.classList.add("btn-outline-primary");
-                cardBlogTag.classList.add("btn-sm");
-                cardBlogTag.innerHTML = "블로그 보러가기";
+                cardTitleTag.innerText = memberYoutubeTitle;
 
                 cardBodyTag.appendChild(cardTitleTag);
-                cardBodyTag.appendChild(cardTextTag);
-                cardBodyTag.appendChild(cardBlogTag);
 
                 cardTag.appendChild(cardImageTag);
                 cardTag.appendChild(cardBodyTag);
