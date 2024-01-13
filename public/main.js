@@ -32,7 +32,7 @@ const sectionInfo = [
     },
     {
         // section-3
-        multipleValue: 1.1,
+        multipleValue: 1.5,
         obj: document.querySelector("#scroll-section-3"),
     },
     {
@@ -157,98 +157,119 @@ window.addEventListener("resize", () => {
     resizeIframe();
 });
 
+function createElement(tagName, attributes, children) {
+    const element = document.createElement(tagName);
+    for (const key in attributes) {
+        if (key === 'classList') {
+            attributes[key].forEach(className => element.classList.add(className));
+        } else if (key === 'style') {
+            for (const styleKey in attributes[key]) {
+                element.style[styleKey] = attributes[key][styleKey];
+            }
+        } else {
+            element.setAttribute(key, attributes[key]);
+        }
+    }
+    (children || []).forEach(child => {
+        if (typeof child === 'string') {
+            element.appendChild(document.createTextNode(child));
+        } else {
+            element.appendChild(child);
+        }
+    });
+    return element;
+}
+
+async function fetchData(id) {
+    try {
+        const response = await fetch(`/api/memberData/${id}`);
+        const json = await response.json();
+        return json;
+    } catch (error) {
+        console.error('Failed to fetch data', error);
+        return [];
+    }
+}
+
+function createCard(info,rowTag,id) {
+    // 카드 생성 로직
+        const memberYoutubeTitle = info.MemberYoutubeTitle;
+        const memberYoutubeThumnailPath = info.MemberYoutubeThumbnailLink;
+        const memberText = info.MemberText;
+        const youtubeLink = info.MemberYoutubeLink;
+
+        const colTag = createElement('div', {
+            classList: ['col-md-4', 'card-default-setting', 'animation-fadeIn-down-bounce'],
+            style: { animationDelay: `${(id%3>0 ? id%3 : 3) * 0.1}s` }
+        });
+    
+        const cardTag = createElement('div', { classList: ['card', 'shadow-sm', 'mb-3'], 'data-src': youtubeLink });
+        const cardImageTag = createElement('img', { src: memberYoutubeThumnailPath, classList: ['card-img-top'], style: { width: '100%', height: '14.5rem' } });
+        const cardBodyTag = createElement('div', { classList: ['card-body'] });
+    
+        const cardTitleTag = createElement('h5', { classList: ['card-title'] }, [memberYoutubeTitle]);
+
+        cardBodyTag.appendChild(cardTitleTag);
+        cardTag.appendChild(cardImageTag);
+        cardTag.appendChild(cardBodyTag);
+        cardTag.addEventListener("click", function () {
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+            const iframe = modal.querySelector("iframe");
+            // 가로 모드일 때
+            if (width > height) {
+                const iframeHeight = height * 0.8;
+                const iframeWidth = (iframeHeight * youtubeIframeInfo.widthRatio) / youtubeIframeInfo.heightRatio;
+                iframe.style.width = iframeWidth + "px";
+                iframe.style.height = iframeHeight + "px";
+            } else if (width < height) {
+                const iframeWidth = isMobile ? width * 0.9 : width * 0.8;
+                const iframeHeight = (iframeWidth * youtubeIframeInfo.heightRatio) / youtubeIframeInfo.widthRatio;
+                iframe.style.width = iframeWidth + "px";
+                iframe.style.height = iframeHeight + "px";
+            }
+            iframe.src = this.getAttribute("data-src");
+
+            if (modal.classList.contains("d-none")) {
+                modal.classList.remove("d-none");
+            }
+            modal.classList.add("d-flex");
+            document.body.style.overflow = "hidden";
+        });
+
+        colTag.appendChild(cardTag);
+        rowTag.appendChild(colTag);
+}
+
+async function loadAndCreateCards(id,rowTag) {
+    const json = await fetchData(id);
+
+    // 데이터가 빈 배열이면 더이상 데이터를 가져오지 않는다.
+    if (json.length === 0) {
+        infiniteScrollInfo.isfetching = false;
+        return;
+    }
+
+    json.forEach((info) => {
+        createCard(info,rowTag,id);
+    });
+}
+
 // 페이지 처음 로딩 시 이미지를 불러오기 위해 사용
 async function preloadImages() {
     // id변수를 활용해서 /api/centerData/로 데이터를 ajax 요청한다.
     if (infiniteScrollInfo.isfetching) {
         const contentArea = document.querySelector("#scroll-section-4").querySelector(".content-area");
-        const rowTag = document.createElement("div")
-        let animationDelayTime = 0;
-        rowTag.classList.add("row");
-        rowTag.classList.add("mb-md-3");
+        const rowTag = createElement('div', {
+            classList: ['row', 'mb-md-3']
+        });
 
         // id변수를 활용해서 /data로 데이터를 ajax 요청한다.
         for (let i = 0; i < 6; i++) {
             if (infiniteScrollInfo.isfetching == false) {
                 break;
             }
-            const response = await fetch(`/api/memberData/${infiniteScrollInfo.id}`);
-            const json = await response.json();
-            // 데이터가 빈 배열이면 더이상 데이터를 가져오지 않는다.
-            if (json.length === 0) {
-                infiniteScrollInfo.isfetching = false;
-                return;
-            }
-            json.forEach((info) => {
-                const memberYoutubeTitle = info.MemberYoutubeTitle;
-                const memberYoutubeThumnailPath = info.MemberYoutubeThumbnailLink;
-                const memberText = info.MemberText;
-                const youtubeLink = info.MemberYoutubeLink;
-
-                const colTag = document.createElement("div");
-                const cardTag = document.createElement("div");
-                const cardImageTag = document.createElement("img");
-                const cardBodyTag = document.createElement("div");
-
-                const cardTitleTag = document.createElement("h5");
-
-                colTag.classList.add("col-md-4");
-                colTag.classList.add("card-default-setting");
-                colTag.classList.add("animation-fadeIn-down-bounce");
-                colTag.style.animationDelay = `${animationDelayTime}s`;
-
-                cardTag.classList.add("card");
-                cardTag.classList.add("shadow-sm");
-                cardTag.classList.add("mb-3");
-                cardTag.setAttribute("data-src", `${youtubeLink}`);
-
-                cardImageTag.classList.add("card-img-top");
-                cardImageTag.src = `${memberYoutubeThumnailPath}`;
-                cardImageTag.style.width = "100%";
-                // cardImageTag.style.height = `${(cardImageTag.style.width * youtubeIframeInfo.heightRatio) / youtubeIframeInfo.widthRatio}px`;
-                cardImageTag.style.height = `14.5rem`;
-
-                cardBodyTag.classList.add("card-body");
-
-                cardTitleTag.classList.add("card-title");
-                cardTitleTag.innerText = memberYoutubeTitle;
-
-                cardBodyTag.appendChild(cardTitleTag);
-
-                cardTag.appendChild(cardImageTag);
-                cardTag.appendChild(cardBodyTag);
-
-                cardTag.addEventListener("click", function () {
-                    const width = window.innerWidth;
-                    const height = window.innerHeight;
-                    const iframe = modal.querySelector("iframe");
-                    // 가로 모드일 때
-                    if (width > height) {
-                        const iframeHeight = height * 0.8;
-                        const iframeWidth = (iframeHeight * youtubeIframeInfo.widthRatio) / youtubeIframeInfo.heightRatio;
-                        iframe.style.width = iframeWidth + "px";
-                        iframe.style.height = iframeHeight + "px";
-                    } else if (width < height) {
-                        const iframeWidth = isMobile ? width * 0.9 : width * 0.8;
-                        const iframeHeight = (iframeWidth * youtubeIframeInfo.heightRatio) / youtubeIframeInfo.widthRatio;
-                        iframe.style.width = iframeWidth + "px";
-                        iframe.style.height = iframeHeight + "px";
-                    }
-                    iframe.src = this.getAttribute("data-src");
-
-                    if (modal.classList.contains("d-none")) {
-                        modal.classList.remove("d-none");
-                    }
-                    modal.classList.add("d-flex");
-                    document.body.style.overflow = "hidden";
-                });
-
-                colTag.appendChild(cardTag);
-
-                rowTag.appendChild(colTag);
-
-                animationDelayTime += 0.1;
-            })
+            await loadAndCreateCards(infiniteScrollInfo.id,rowTag);
             infiniteScrollInfo.id++;
         }
         //rowTag 내 Coltag가 1개라도 있으면 rowTag를 contentArea에 추가한다.
@@ -261,11 +282,6 @@ async function preloadImages() {
 history.scrollRestoration = "manual";
 window.addEventListener("load", (e) => {
     preloadImages()
-    // if (isMobile) {
-    //     messageInfo.forEach((content) => {
-    //         content.style.height = `${window.innerHeight}px`;
-    //     });
-    // }
 })
 
 function calculateValue(animationValues, scrollInSection, activedSectionHeight) {
@@ -356,7 +372,15 @@ function playAnimation(activeSectionIndex, previousHeight) {
                 break;
             }
     }
+}
 
+function handleAnimation(message, addAnimation, removeAnimation) {
+    if (message.classList.contains(removeAnimation)) {
+        message.classList.remove(removeAnimation);
+    }
+    if(message.classList.contains(addAnimation) != true){
+        message.classList.add(addAnimation);
+    }
 }
 
 function playMobileAnimation(activeSectionIndex, previousHeight, direction) {
@@ -374,85 +398,35 @@ function playMobileAnimation(activeSectionIndex, previousHeight, direction) {
                 const animationValues = messageInSection.values;
                 if (0.05<scrollRateInSection && scrollRateInSection <= animationValues.message1_fadeIn.end) {
                     if(direction == 1){
-                        if (message1.classList.contains("animation-fadeOut-down")) {
-                            message1.classList.remove("animation-fadeOut-down");
-                        }
-                        if(message1.classList.contains("animation-fadeIn-down") != true){
-                            message1.classList.add("animation-fadeIn-down");
-                        }
+                        handleAnimation(message1,"animation-fadeIn-down","animation-fadeOut-down");
                     }else if(direction == 0){
-                        if (message1.classList.contains("animation-fadeIn-down")) {
-                            message1.classList.remove("animation-fadeIn-down");
-                        }
-                        if(message1.classList.contains("animation-fadeOut-down") != true){
-                            message1.classList.add("animation-fadeOut-down");
-                        }
+                        handleAnimation(message1,"animation-fadeOut-down","animation-fadeIn-down");
                     }
                 } else if (animationValues.message1_fadeOut.start<=scrollRateInSection && scrollRateInSection<= animationValues.message1_fadeOut.end) {
-                    if(direction == 1 && message1.style){
-                        if (message1.classList.contains("animation-fadeIn-down")) {
-                            message1.classList.remove("animation-fadeIn-down");
-                        }
-                        if(message1.classList.contains("animation-fadeOut-down") != true){
-                            message1.classList.add("animation-fadeOut-down");
-                        }
+                    if(direction == 1){
+                        handleAnimation(message1,"animation-fadeOut-down","animation-fadeIn-down");
                     }else if(direction == 0){
-                        if (message1.classList.contains("animation-fadeOut-down")) {
-                            message1.classList.remove("animation-fadeOut-down");
-                        }
-                        if(message1.classList.contains("animation-fadeIn-down") != true){
-                            message1.classList.add("animation-fadeIn-down");
-                        }
+                        handleAnimation(message1,"animation-fadeIn-down","animation-fadeOut-down");
                     }
                 }
                 if (animationValues.message1_fadeOut.end<scrollRateInSection && scrollRateInSection<animationValues.message2_fadeIn.start) {
                     if(direction == 1){
-                        if (message2.classList.contains("animation-fadeOut-down")) {
-                            message2.classList.remove("animation-fadeOut-down");
-                        }
-                        if (message2.classList.contains("animation-fadeIn-down") != true) {
-                            message2.classList.remove("animation-fadeIn-down");
-                        }
+                        handleAnimation(message2,"animation-fadeIn-down","animation-fadeOut-down");
                     }else if(direction == 0){
-                        if (message2.classList.contains("animation-fadeIn-down")) {
-                            message2.classList.remove("animation-fadeIn-down");
-                        }
-                        if(message2.classList.contains("animation-fadeOut-down") != true){
-                            message2.classList.add("animation-fadeOut-down");
-                        }
+                        handleAnimation(message2,"animation-fadeOut-down","animation-fadeIn-down");
                     }
                 }
                 else if (animationValues.message2_fadeIn.start<=scrollRateInSection && scrollRateInSection<= animationValues.message2_fadeIn.end) {
                     if(direction == 1){
-                        if (message2.classList.contains("animation-fadeOut-down")) {
-                            message2.classList.remove("animation-fadeOut-down");
-                        }
-                        if(message2.classList.contains("animation-fadeIn-down") != true){
-                            message2.classList.add("animation-fadeIn-down");
-                        }
+                        handleAnimation(message2,"animation-fadeIn-down","animation-fadeOut-down");
                     } else if(direction == 0){
-                        if (message2.classList.contains("animation-fadeIn-down")) {
-                            message2.classList.remove("animation-fadeIn-down");
-                        }
-                        if(message2.classList.contains("animation-fadeOut-down") != true){
-                            message2.classList.add("animation-fadeOut-down");
-                        }
+                        handleAnimation(message2,"animation-fadeOut-down","animation-fadeIn-down");
                     }
                 } else if(animationValues.message2_fadeOut.start<=scrollRateInSection && scrollRateInSection<= animationValues.message2_fadeOut.end ) {
                     if(direction == 1){
-                        if (message2.classList.contains("animation-fadeIn-down")) {
-                            message2.classList.remove("animation-fadeIn-down");
-                        }
-                        if(message2.classList.contains("animation-fadeOut-down") != true){
-                            message2.classList.add("animation-fadeOut-down");
-                        }
+                        handleAnimation(message2,"animation-fadeOut-down","animation-fadeIn-down");
                     }else if(direction==0){
-                        if (message2.classList.contains("animation-fadeOut-down")) {
-                            message2.classList.remove("animation-fadeOut-down");
-                        }
-                        if(message2.classList.contains("animation-fadeIn-down") != true){
-                            message2.classList.add("animation-fadeIn-down");
-                        }
+                        handleAnimation(message2,"animation-fadeIn-down","animation-fadeOut-down");
                     }
                 }
                 if(scrollRateInSection>animationValues.message2_fadeOut.end){
@@ -472,63 +446,29 @@ function playMobileAnimation(activeSectionIndex, previousHeight, direction) {
                 const animationValues = messageInSection.values;
                 if (0.05<scrollRateInSection && scrollRateInSection <= animationValues.message1_fadeIn.end) {
                     if(direction == 1){
-                        if (message1.classList.contains("animation-fadeOut-down")) {
-                            message1.classList.remove("animation-fadeOut-down");
-                        }
-                        if(message1.classList.contains("animation-fadeIn-down") != true){
-                            message1.classList.add("animation-fadeIn-down");
-                        }
+                        handleAnimation(message1,"animation-fadeIn-down","animation-fadeOut-down");
                     }else if(direction == 0){
-                        if (message1.classList.contains("animation-fadeIn-down")) {
-                            message1.classList.remove("animation-fadeIn-down");
-                        }
-                        if(message1.classList.contains("animation-fadeOut-down") != true){
-                            message1.classList.add("animation-fadeOut-down");
-                        }
+                        handleAnimation(message1,"animation-fadeOut-down","animation-fadeIn-down");
                     }
-                } else if (animationValues.message1_fadeOut.start<=scrollRateInSection && scrollRateInSection<= animationValues.message1_fadeOut.end) {
+                } else if (animationValues.message1_fadeOut.start<=scrollRateInSection && scrollRateInSection<= animationValues. message1_fadeOut.end) {
                     if(direction == 1 && message1.style){
-                        if (message1.classList.contains("animation-fadeIn-down")) {
-                            message1.classList.remove("animation-fadeIn-down");
-                        }
-                        if(message1.classList.contains("animation-fadeOut-down") != true){
-                            message1.classList.add("animation-fadeOut-down");
-                        }
+                        handleAnimation(message1,"animation-fadeOut-down","animation-fadeIn-down");
                     }else if(direction == 0){
-                        if (message1.classList.contains("animation-fadeOut-down")) {
-                            message1.classList.remove("animation-fadeOut-down");
-                        }
-                        if(message1.classList.contains("animation-fadeIn-down") != true){
-                            message1.classList.add("animation-fadeIn-down");
-                        }
+                        handleAnimation(message1,"animation-fadeIn-down","animation-fadeOut-down");
                     }
                 }
                 if (animationValues.message1_fadeOut.end<scrollRateInSection && scrollRateInSection<= animationValues.message2_fadeIn.start) {
                     if(direction == 1){
-                        if (message2.classList.contains("animation-fadeOut-down")) {
-                            message2.classList.remove("animation-fadeOut-down");
-                        }
-                        if (message2.classList.contains("animation-fadeIn-down") != true) {
-                            message2.classList.remove("animation-fadeIn-down");
-                        }
+                        handleAnimation(message2,"animation-fadeIn-down","animation-fadeOut-down");
                     }else if(direction == 0){
-                        if (message2.classList.contains("animation-fadeIn-down")) {
-                            message2.classList.remove("animation-fadeIn-down");
-                        }
-                        if(message2.classList.contains("animation-fadeOut-down") != true){
-                            message2.classList.add("animation-fadeOut-down");
-                        }
+                        handleAnimation(message2,"animation-fadeOut-down","animation-fadeIn-down");
                     }
                 }
                 else if (animationValues.message2_fadeIn.start<=scrollRateInSection && scrollRateInSection<= animationValues.message2_fadeIn.end) {
                     if(direction == 1){
-                        if (message2.classList.contains("animation-fadeOut-down")) {
-                            message2.classList.remove("animation-fadeOut-down");
-                        }
-                        if(message2.classList.contains("animation-fadeIn-down") != true){
-                            message2.classList.add("animation-fadeIn-down");
-                        }
+                        handleAnimation(message2,"animation-fadeIn-down","animation-fadeOut-down");
                     } else if(direction == 0){
+                        handleAnimation(message2,"animation-fadeOut-down","animation-fadeIn-down");
                         if (message2.classList.contains("animation-fadeIn-down")) {
                             message2.classList.remove("animation-fadeIn-down");
                         }
@@ -538,19 +478,9 @@ function playMobileAnimation(activeSectionIndex, previousHeight, direction) {
                     }
                 } else if(animationValues.message2_fadeOut.start<=scrollRateInSection && scrollRateInSection<= animationValues.message2_fadeOut.end ) {
                     if(direction == 1){
-                        if (message2.classList.contains("animation-fadeIn-down")) {
-                            message2.classList.remove("animation-fadeIn-down");
-                        }
-                        if(message2.classList.contains("animation-fadeOut-down") != true){
-                            message2.classList.add("animation-fadeOut-down");
-                        }
+                        handleAnimation(message2,"animation-fadeOut-down","animation-fadeIn-down");
                     }else if(direction==0){
-                        if (message2.classList.contains("animation-fadeOut-down")) {
-                            message2.classList.remove("animation-fadeOut-down");
-                        }
-                        if(message2.classList.contains("animation-fadeIn-down") != true){
-                            message2.classList.add("animation-fadeIn-down");
-                        }
+                        handleAnimation(message2,"animation-fadeIn-down","animation-fadeOut-down");
                     }
                 }
                 if(scrollRateInSection>animationValues.message2_fadeOut.end){
@@ -624,28 +554,14 @@ const intersectionObserverSection3 = new IntersectionObserver((entries, observer
     let animationDelayTime = 0.1;
     // scroll-section-3이 닿으면 title과 버튼을 보여준다.
     if (entry.isIntersecting) {
-        if (sectionTitle.classList.contains("animation-fadeOut-down")) {
-            sectionTitle.classList.remove("animation-fadeOut-down");
-        }
-        sectionTitle.classList.add("animation-fadeIn-down");
-
-        if (buttonDiv.classList.contains("animation-fadeOut-down")) {
-            buttonDiv.classList.remove("animation-fadeOut-down");
-        }
-        buttonDiv.classList.add("animation-fadeIn-down");
+        handleAnimation(sectionTitle,"animation-fadeIn-down","animation-fadeOut-down");
+        handleAnimation(buttonDiv,"animation-fadeIn-down","animation-fadeOut-down");
         buttonDiv.style.animationDelay = `${animationDelayTime}s`;
     }
     // scroll-section-3에서 벗어나면 title과 버튼을 숨긴다.
     else if (entry.isIntersecting == false) {
-        if (sectionTitle.classList.contains("animation-fadeIn-down")) {
-            sectionTitle.classList.remove("animation-fadeIn-down");
-        }
-        sectionTitle.classList.add("animation-fadeOut-down");
-
-        if (buttonDiv.classList.contains("animation-fadeIn-down")) {
-            buttonDiv.classList.remove("animation-fadeIn-down");
-        }
-        buttonDiv.classList.add("animation-fadeOut-down");
+        handleAnimation(sectionTitle,"animation-fadeOut-down","animation-fadeIn-down");
+        handleAnimation(buttonDiv,"animation-fadeOut-down","animation-fadeIn-down");
     }
 }, { threshold: 0.5 })
 
@@ -660,10 +576,7 @@ const intersectionObserverSection4 = new IntersectionObserver((entries, observer
         const sectionTitle = contentArea.querySelector("h2");
         const rows = contentArea.querySelectorAll(".row");
         let animationDelayTime = 0;
-        if (sectionTitle.classList.contains("animation-fadeOut-noMove")) {
-            sectionTitle.classList.remove("animation-fadeOut-noMove");
-        }
-        sectionTitle.classList.add("animation-fadeIn-noMove");
+        handleAnimation(sectionTitle,"animation-fadeIn-noMove","animation-fadeOut-noMove");
         rows.forEach((row) => {
             const cols = row.querySelectorAll(".col-md-4")
             cols.forEach((col) => {
@@ -683,17 +596,11 @@ const intersectionObserverSection4 = new IntersectionObserver((entries, observer
         const sectionTitle = contentArea.querySelector("h2");
         const rows = contentArea.querySelectorAll(".row");
 
-        if (sectionTitle.classList.contains("animation-fadeIn-noMove")) {
-            sectionTitle.classList.remove("animation-fadeIn-noMove");
-            sectionTitle.classList.add("animation-fadeOut-noMove");
-        }
+        handleAnimation(sectionTitle,"animation-fadeOut-noMove","animation-fadeIn-noMove");
         rows.forEach((row) => {
             const cols = row.querySelectorAll(".col-md-4")
             cols.forEach((col) => {
-                if (col.classList.contains("animation-fadeIn-down-bounce")) {
-                    col.classList.remove("animation-fadeIn-down-bounce");
-                    col.classList.add("animation-fadeOut-down-bounce");
-                }
+                handleAnimation(col,"animation-fadeOut-down-bounce","animation-fadeIn-down-bounce");
             })
         })
     }
@@ -705,91 +612,16 @@ const intersectionObserverUnlimitedScroll = new IntersectionObserver(async (entr
     const [entry] = entries;
     if (entry.isIntersecting && infiniteScrollInfo.isfetching) {
         const contentArea = document.querySelector("#scroll-section-4").querySelector(".content-area");
-        const rowTag = document.createElement("div")
-        let animationDelayTime = 0;
-        rowTag.classList.add("row");
-        rowTag.classList.add("mb-md-3");
+        const rowTag = createElement('div', {
+            classList: ['row', 'mb-md-3']
+        });
 
         // id변수를 활용해서 /data로 데이터를 ajax 요청한다.
         for (let i = 0; i < 3; i++) {
             if (infiniteScrollInfo.isfetching == false) {
                 break;
             }
-            const response = await fetch(`/api/memberData/${infiniteScrollInfo.id}`);
-            const json = await response.json();
-            // 데이터가 빈 배열이면 더이상 데이터를 가져오지 않는다.
-            if (json.length === 0) {
-                infiniteScrollInfo.isfetching = false;
-                return;
-            }
-            json.forEach((info) => {
-                const memberYoutubeTitle = info.MemberYoutubeTitle;
-                const memberYoutubeThumnailPath = info.MemberYoutubeThumbnailLink;
-                const youtubeLink = info.MemberYoutubeLink;
-
-                const colTag = document.createElement("div");
-                const cardTag = document.createElement("div");
-                const cardImageTag = document.createElement("img");
-                const cardBodyTag = document.createElement("div");
-
-                const cardTitleTag = document.createElement("h5");
-
-                colTag.classList.add("col-md-4");
-                colTag.classList.add("card-default-setting");
-                colTag.classList.add("animation-fadeIn-down-bounce");
-                colTag.style.animationDelay = `${animationDelayTime}s`;
-
-                cardTag.classList.add("card");
-                cardTag.classList.add("shadow-sm");
-                cardTag.classList.add("mb-3");
-                cardTag.setAttribute("data-src", `${youtubeLink}`);
-
-                cardImageTag.classList.add("card-img-top");
-                cardImageTag.src = `${memberYoutubeThumnailPath}`;
-                cardImageTag.style.width = "100%";
-                cardImageTag.style.height = `${(cardImageTag.style.width * youtubeIframeInfo.heightRatio) / youtubeIframeInfo.widthRatio}px`;
-
-                cardBodyTag.classList.add("card-body");
-
-                cardTitleTag.classList.add("card-title");
-                cardTitleTag.innerText = memberYoutubeTitle;
-
-                cardBodyTag.appendChild(cardTitleTag);
-
-                cardTag.appendChild(cardImageTag);
-                cardTag.appendChild(cardBodyTag);
-
-                cardTag.addEventListener("click", function () {
-                    const width = window.innerWidth;
-                    const height = window.innerHeight;
-                    const iframe = modal.querySelector("iframe");
-                    // 가로 모드일 때
-                    if (width > height) {
-                        const iframeHeight = height * 0.8;
-                        const iframeWidth = (iframeHeight * youtubeIframeInfo.widthRatio) / youtubeIframeInfo.heightRatio;
-                        iframe.style.width = iframeWidth + "px";
-                        iframe.style.height = iframeHeight + "px";
-                    } else if (width < height) {
-                        const iframeWidth = isMobile ? width * 0.9 : width * 0.8;
-                        const iframeHeight = (iframeWidth * youtubeIframeInfo.heightRatio) / youtubeIframeInfo.widthRatio;
-                        iframe.style.width = iframeWidth + "px";
-                        iframe.style.height = iframeHeight + "px";
-                    }
-                    iframe.src = this.getAttribute("data-src");
-
-                    if (modal.classList.contains("d-none")) {
-                        modal.classList.remove("d-none");
-                    }
-                    modal.classList.add("d-flex");
-                    document.body.style.overflow = "hidden";
-                });
-
-                colTag.appendChild(cardTag);
-
-                rowTag.appendChild(colTag);
-
-                animationDelayTime += 0.1;
-            })
+            await loadAndCreateCards(infiniteScrollInfo.id,rowTag);
             infiniteScrollInfo.id++;
         }
         if (rowTag.querySelectorAll(".col-md-4").length > 0) {
@@ -799,7 +631,4 @@ const intersectionObserverUnlimitedScroll = new IntersectionObserver(async (entr
     }
 }, { threshold: 1.0 })
 
-
-
 intersectionObserverUnlimitedScroll.observe(document.querySelector("footer"));
-
