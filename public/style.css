@@ -89,6 +89,44 @@ nav {
     transition: all 1.0s;
 }
 
+.mouse-cursor{
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: gray;
+    z-index: 9999;
+    pointer-events: none;
+    transition: all 0.5s;
+    transform: translate(-50%, -50%);
+    mix-blend-mode: difference;
+    opacity: 0;
+    display: none;
+}
+
+.volume-control-mute{
+    position: absolute;
+    bottom: 2rem;
+    left: 2rem;
+    cursor: pointer;
+    content: url("./img/icon/volume-mute.svg");
+}
+.volume-control-unmute{
+    position: absolute;
+    bottom: 2rem;
+    left: 2rem;
+    cursor: pointer;
+    content: url("./img/icon/volume-up.svg");
+}
+
+
+.hover{
+    opacity: 1;
+    display: block;
+}
+
 .modal {
     overflow: auto;
     background-color: rgba(0, 0, 0, 0.6);

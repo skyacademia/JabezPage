@@ -20,7 +20,7 @@ const sectionInfo = [
         multipleValue: isMobile ? 6 : 3,
         obj: document.querySelector("#scroll-section-2"),
         values: {
-            message1_fadeIn_opacity: [0, 1, { start: 0, end: 0.14 }],
+            message1_fadeIn_opacity: [0, 1.5, { start: 0, end: 0.14 }],
             message1_fadeIn_transform: [10, 0, { start: 0, end: 0.14 }],
             message1_fadeOut_opacity: [1, 0, { start: 0.18, end: 0.32 }],
             message1_fadeOut_transform: [0, -10, { start: 0.18, end: 0.32 }],
@@ -80,7 +80,7 @@ const touchInfo = {
     startY: 0,
     endY: 0,
 }
-
+const mousePointer = sectionInfo[1].obj.querySelector(".mouse-cursor");
 const modal = document.getElementById("myModal");
 let currentDivIndex = 0;
 
@@ -104,7 +104,37 @@ modal.querySelector(".modal-content").addEventListener("click", function (event)
         event.target.querySelector("iframe").src = "";
         document.body.style.overflow = "auto";
     }
-})
+});
+sectionInfo[1].obj.querySelector(".content-area").addEventListener("mousemove", function (event) {
+    if(mousePointer.classList.contains("hover") != true){
+        mousePointer.classList.add("hover");
+    }
+    mousePointer.style.left = `${event.offsetX}px`;
+    mousePointer.style.top = `${event.offsetY}px`;
+});
+
+
+const video = sectionInfo[1].obj.querySelector("video");
+    
+sectionInfo[1].obj.querySelector(".content-area").addEventListener("mouseleave", function (event) {
+    mousePointer.classList.remove("hover");
+});
+sectionInfo[1].obj.querySelector(".volume-control-mute").addEventListener("click", function (event) {
+    // sectionInfo[1].obj.querySelector(".volume-control").classList.toggle("");
+
+    
+    // scroll-section-2의 video를 찾아서 볼륩을 조절한다.
+    const video = sectionInfo[1].obj.querySelector("video");
+    if (video.muted) {
+        video.muted = false;
+        this.classList.remove("volume-control-mute");
+        this.classList.add("volume-control-unmute");
+    } else {
+        video.muted = true;
+        this.classList.remove("volume-control-unmute");
+        this.classList.add("volume-control-mute");
+    }
+});
 let lastScrollTop = 0;
 
 // resize 이벤트 발생 시 iframe의 크기를 조절
