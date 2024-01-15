@@ -105,36 +105,84 @@ modal.querySelector(".modal-content").addEventListener("click", function (event)
         document.body.style.overflow = "auto";
     }
 });
-sectionInfo[1].obj.querySelector(".content-area").addEventListener("mousemove", function (event) {
+sectionInfo[1].obj.querySelector(".sticky-area").addEventListener("mousemove", function (event) {
     if(mousePointer.classList.contains("hover") != true){
         mousePointer.classList.add("hover");
     }
+
     mousePointer.style.left = `${event.offsetX}px`;
     mousePointer.style.top = `${event.offsetY}px`;
+
+    /* 포인터를 부드럽게 움직이기 위한 로직 (transition 속성이 없어도 됨) */
+    // // 현재 아이콘의 위치
+    // const iconX = parseFloat(mousePointer.style.left) || 0;
+    // const iconY = parseFloat(mousePointer.style.top) || 0;
+
+    // // 마우스의 현재 위치
+    // const mouseX = event.offsetX;
+    // const mouseY = event.offsetY;
+
+    // // 비율 계산
+    // const ratio = 0.3; // 조절 가능한 비율
+    // const deltaX = (mouseX - iconX) * ratio;
+    // const deltaY = (mouseY - iconY) * ratio;
+
+    // 아이콘의 새로운 위치 설정
+    // mousePointer.style.left = `${iconX + deltaX}px`;
+    // mousePointer.style.top = `${iconY + deltaY}px`;
 });
-
-
-const video = sectionInfo[1].obj.querySelector("video");
     
 sectionInfo[1].obj.querySelector(".content-area").addEventListener("mouseleave", function (event) {
     mousePointer.classList.remove("hover");
 });
-sectionInfo[1].obj.querySelector(".volume-control-mute").addEventListener("click", function (event) {
-    // sectionInfo[1].obj.querySelector(".volume-control").classList.toggle("");
 
-    
+// scroll-section-2의 video를 찾아서 재생/일시정지 한다.
+sectionInfo[1].obj.querySelector(".content-area").addEventListener("click", function (event) {
+    const video = sectionInfo[1].obj.querySelector("video");
+    if (video.paused) {
+        video.play();
+        const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        path.setAttribute("d","M5.5 3.5A1.5 1.5 0 0 1 7 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5m5 0A1.5 1.5 0 0 1 12 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5");
+        mousePointer.replaceChildren(path);
+    } else {
+        video.pause();
+        const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        path.setAttribute("d","m11.596 8.697-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393");
+        mousePointer.replaceChildren(path);
+    }
+});
+
+
+sectionInfo[1].obj.querySelector(".volume-control").addEventListener("mouseover", function (event) {
+    mousePointer.style.opacity = "0";
+});
+sectionInfo[1].obj.querySelector(".volume-control").addEventListener("mouseleave", function (event) {
+    mousePointer.style.opacity = "1";
+});
+sectionInfo[1].obj.querySelector(".volume-control").addEventListener("click", function (event) {
     // scroll-section-2의 video를 찾아서 볼륩을 조절한다.
     const video = sectionInfo[1].obj.querySelector("video");
     if (video.muted) {
         video.muted = false;
-        this.classList.remove("volume-control-mute");
-        this.classList.add("volume-control-unmute");
+        this.replaceChildren();
+        // 아이콘의 path를 바꾼다.
+        const path1 = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        path1.setAttribute("d","M11.536 14.01A8.47 8.47 0 0 0 14.026 8a8.47 8.47 0 0 0-2.49-6.01l-.708.707A7.48 7.48 0 0 1 13.025 8c0 2.071-.84 3.946-2.197 5.303z");
+        const path2 = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        path2.setAttribute("d","M10.121 12.596A6.48 6.48 0 0 0 12.025 8a6.48 6.48 0 0 0-1.904-4.596l-.707.707A5.48 5.48 0 0 1 11.025 8a5.48 5.48 0 0 1-1.61 3.89z");
+        const path3 = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        path3.setAttribute("d","M8.707 11.182A4.5 4.5 0 0 0 10.025 8a4.5 4.5 0 0 0-1.318-3.182L8 5.525A3.5 3.5 0 0 1 9.025 8 3.5 3.5 0 0 1 8 10.475zM6.717 3.55A.5.5 0 0 1 7 4v8a.5.5 0 0 1-.812.39L3.825 10.5H1.5A.5.5 0 0 1 1 10V6a.5.5 0 0 1 .5-.5h2.325l2.363-1.89a.5.5 0 0 1 .529-.06");
+
+        this.replaceChildren(path1, path2, path3);
     } else {
         video.muted = true;
-        this.classList.remove("volume-control-unmute");
-        this.classList.add("volume-control-mute");
+        // 아이콘의 path를 바꾼다.
+        const path1 = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        path1.setAttribute("d","M6.717 3.55A.5.5 0 0 1 7 4v8a.5.5 0 0 1-.812.39L3.825 10.5H1.5A.5.5 0 0 1 1 10V6a.5.5 0 0 1 .5-.5h2.325l2.363-1.89a.5.5 0 0 1 .529-.06m7.137 2.096a.5.5 0 0 1 0 .708L12.207 8l1.647 1.646a.5.5 0 0 1-.708.708L11.5 8.707l-1.646 1.647a.5.5 0 0 1-.708-.708L10.793 8 9.146 6.354a.5.5 0 1 1 .708-.708L11.5 7.293l1.646-1.647a.5.5 0 0 1 .708 0")
+        this.replaceChildren(path1);
     }
 });
+
 let lastScrollTop = 0;
 
 // resize 이벤트 발생 시 iframe의 크기를 조절
