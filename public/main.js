@@ -84,7 +84,6 @@ const mousePointer = sectionInfo[1].obj.querySelector(".mouse-cursor");
 const modal = document.getElementById("myModal");
 let currentDivIndex = 0;
 
-
 window.addEventListener("click", function (event) {
     if (event.target == modal) {
         if (modal.classList.contains("d-flex")) {
@@ -95,6 +94,11 @@ window.addEventListener("click", function (event) {
         document.body.style.overflow = "auto";
     }
 })
+window.addEventListener("DOMContentLoaded", function(event){
+    const video = sectionInfo[1].obj.querySelector("video");
+    video.querySelector("source").setAttribute("src",`./video/${isMobile?"jabez_background_video_2_fontSize":"jabez_background_video_2"}.mp4`);
+    video.load();
+});
 modal.querySelector(".modal-content").addEventListener("click", function (event) {
     if (event.target == this) {
         if (modal.classList.contains("d-flex")) {
