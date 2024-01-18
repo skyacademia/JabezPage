@@ -87,7 +87,8 @@ window.addEventListener("click", function (event) {
 })
 window.addEventListener("DOMContentLoaded", function(event){
     const video = sectionInfo[1].obj.querySelector("video");
-    video.querySelector("source").setAttribute("src",`./video/${isMobile?"jabez_background_video_2_fontSize":"jabez_background_video_2"}.mp4`);
+    video.querySelectorAll("source")[0].setAttribute("src",`./video/${isMobile?"jabez_background_video_2_fontSize":"jabez_background_video_2"}.webm`);
+    video.querySelectorAll("source")[1].setAttribute("src",`./video/${isMobile?"jabez_background_video_2_fontSize":"jabez_background_video_2"}.mp4`);
     video.load();
 });
 modal.querySelector(".modal-content").addEventListener("click", function (event) {
