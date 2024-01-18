@@ -19,16 +19,7 @@ const sectionInfo = [
         // section-2
         multipleValue: isMobile ? 6 : 3,
         obj: document.querySelector("#scroll-section-2"),
-        values: {
-            message1_fadeIn_opacity: [0, 1.5, { start: 0, end: 0.14 }],
-            message1_fadeIn_transform: [10, 0, { start: 0, end: 0.14 }],
-            message1_fadeOut_opacity: [1, 0, { start: 0.18, end: 0.32 }],
-            message1_fadeOut_transform: [0, -10, { start: 0.18, end: 0.32 }],
-            message2_fadeIn_opacity: [0, 1, { start: 0.34, end: 0.48 }],
-            message2_fadeIn_transform: [10, 0, { start: 0.34, end: 0.48 }],
-            message2_fadeOut_opacity: [1, 0, { start: 0.52, end: 0.66 }],
-            message2_fadeOut_transform: [0, -10, { start: 0.52, end: 0.66 }],
-        }
+        values: {}
     },
     {
         // section-3
@@ -411,32 +402,6 @@ function playAnimation(activeSectionIndex, previousHeight) {
                 const message2_fadeOut_opacity_value = calculateValue(sectionValues.message2_fadeOut_opacity, scrollInSection, activeSectionHeight);
                 const message2_fadeOut_transition_value = calculateValue(sectionValues.message2_fadeOut_transform, scrollInSection, activeSectionHeight);
 
-                if (scrollRateInSection <= 0.16) {
-                    contentList[0].style.opacity = message1_fadeIn_opacity_value;
-                    contentList[0].style.transform = `translate(0,${message1_fadeIn_transition_value}%)`;
-                } else {
-                    contentList[0].style.opacity = message1_fadeOut_opacity_value;
-                    contentList[0].style.transform = `translate(0,${message1_fadeOut_transition_value}%)`;
-                }
-                if (scrollRateInSection <= 0.50) {
-                    contentList[1].style.opacity = message2_fadeIn_opacity_value;
-                    contentList[1].style.transform = `translate(0,${message2_fadeIn_transition_value}%)`;
-                } else {
-                    contentList[1].style.opacity = message2_fadeOut_opacity_value;
-                    contentList[1].style.transform = `translate(0,${message2_fadeOut_transition_value}%)`;
-                }
-                break;
-            }
-        case 1:
-            {
-                const message1_fadeIn_opacity_value = calculateValue(sectionValues.message1_fadeIn_opacity, scrollInSection, activeSectionHeight);
-                const message1_fadeIn_transition_value = calculateValue(sectionValues.message1_fadeIn_transform, scrollInSection, activeSectionHeight);
-                const message1_fadeOut_opacity_value = calculateValue(sectionValues.message1_fadeOut_opacity, scrollInSection, activeSectionHeight);
-                const message1_fadeOut_transition_value = calculateValue(sectionValues.message1_fadeOut_transform, scrollInSection, activeSectionHeight);
-                const message2_fadeIn_opacity_value = calculateValue(sectionValues.message2_fadeIn_opacity, scrollInSection, activeSectionHeight);
-                const message2_fadeIn_transition_value = calculateValue(sectionValues.message2_fadeIn_transform, scrollInSection, activeSectionHeight);
-                const message2_fadeOut_opacity_value = calculateValue(sectionValues.message2_fadeOut_opacity, scrollInSection, activeSectionHeight);
-                const message2_fadeOut_transition_value = calculateValue(sectionValues.message2_fadeOut_transform, scrollInSection, activeSectionHeight);
                 if (scrollRateInSection <= 0.16) {
                     contentList[0].style.opacity = message1_fadeIn_opacity_value;
                     contentList[0].style.transform = `translate(0,${message1_fadeIn_transition_value}%)`;
