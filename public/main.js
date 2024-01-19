@@ -109,7 +109,7 @@ sectionInfo[1].obj.querySelector(".sticky-area").addEventListener("mousemove", f
     mousePointer.style.left = `${event.offsetX}px`;
     mousePointer.style.top = `${event.offsetY}px`;
 
-    /* 포인터를 부드럽게 움직이기 위한 로직 (transition 속성이 없어도 됨) */
+    /* 포인터를 부드럽게 움직이기 위한 로직 (transition 속성이 없어도 됨) - 동작하는 로직이기 때문에 남겨놓음 */
     // // 현재 아이콘의 위치
     // const iconX = parseFloat(mousePointer.style.left) || 0;
     // const iconY = parseFloat(mousePointer.style.top) || 0;
@@ -217,6 +217,21 @@ function resizeIframe() {
     }
 }
 
+// 모바일에서 resize 이벤트 발생 시 video의 object-fit을 조절
+function resizeVideo() {
+    const video = sectionInfo[1].obj.querySelector("video");
+    // 세로 모드일 때
+    if (isMobile && window.matchMedia("(orientation: portrait)").matches) {
+        video.classList.remove("object-fit-cover");
+        video.classList.add("object-fit-contain");
+    }
+    // 가로 모드일 때
+    else if (isMobile && window.matchMedia("(orientation: landscape)").matches) {
+        video.classList.remove("object-fit-contain");
+        video.classList.add("object-fit-cover");
+    }
+}
+
 // resize 이벤트 발생 시 section의 높이를 조절
 function resizeSection() {
     for (let i = 0; i < sectionInfo.length; i++) {
@@ -226,9 +241,11 @@ function resizeSection() {
     }
 }
 resizeSection();
+resizeVideo();
 window.addEventListener("resize", () => {
     resizeSection();
     resizeIframe();
+    resizeVideo();
 });
 
 function createElement(tagName, attributes, children) {
