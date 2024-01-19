@@ -17,7 +17,7 @@ const sectionInfo = [
     },
     {
         // section-2
-        multipleValue: 2,
+        multipleValue: 3,
         obj: document.querySelector("#scroll-section-2"),
         values: {}
     },
@@ -219,7 +219,24 @@ function resizeIframe() {
 
 // 모바일에서 resize 이벤트 발생 시 video의 object-fit을 조절
 function resizeVideo() {
+    const width = window.innerWidth;
+    const height = window.innerHeight;
     const video = sectionInfo[1].obj.querySelector("video");
+    
+    // 세로 모드일 때
+    if (isMobile != true && (width > height)) {
+        if(video.classList.contains("object-fit-contain")){
+            video.classList.remove("object-fit-contain");
+        }
+        video.classList.add("object-fit-cover");
+    }
+    else if(isMobile != true && (width < height)){
+        if(video.classList.contains("object-fit-cover")){
+            video.classList.remove("object-fit-cover");
+        }
+        video.classList.add("object-fit-contain");
+    }
+
     // 세로 모드일 때
     if (isMobile && window.matchMedia("(orientation: portrait)").matches) {
         video.classList.remove("object-fit-cover");
@@ -439,6 +456,14 @@ function playAnimation(activeSectionIndex, previousHeight) {
     }
 }
 
+function handleClassList(message, addClass, removeClass) {
+    if (message.classList.contains(removeClass)) {
+        message.classList.remove(removeClass);
+    }
+    if(message.classList.contains(addClass) != true){
+        message.classList.add(addClass);
+    }
+}
 function handleAnimation(message, addAnimation, removeAnimation) {
     if (message.classList.contains(removeAnimation)) {
         message.classList.remove(removeAnimation);
