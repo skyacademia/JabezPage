@@ -36,7 +36,7 @@ const messageInfo = [
     {
         // section-1
         obj: [document.querySelector("#scroll-section-1").querySelectorAll(".content")[0],
-            document.querySelector("#scroll-section-1").querySelectorAll(".content")[1]
+        document.querySelector("#scroll-section-1").querySelectorAll(".content")[1]
         ],
         values: {
             message1_fadeIn: { start: 0, end: 0.14 },
@@ -49,7 +49,7 @@ const messageInfo = [
     {
         // section-2
         obj: [document.querySelector("#scroll-section-2").querySelectorAll(".content")[0],
-            document.querySelector("#scroll-section-2").querySelectorAll(".content")[1]],
+        document.querySelector("#scroll-section-2").querySelectorAll(".content")[1]],
         values: {
             message1_fadeIn: { start: 0, end: 0.14 },
             message1_fadeOut: { start: 0.18, end: 0.32 },
@@ -71,6 +71,18 @@ const touchInfo = {
     startY: 0,
     endY: 0,
 }
+const iconPathData = {
+    playIcon: "m11.596 8.697-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393",
+    pauseIcon: "M5.5 3.5A1.5 1.5 0 0 1 7 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5m5 0A1.5 1.5 0 0 1 12 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5",
+    muteIcon: "M6.717 3.55A.5.5 0 0 1 7 4v8a.5.5 0 0 1-.812.39L3.825 10.5H1.5A.5.5 0 0 1 1 10V6a.5.5 0 0 1 .5-.5h2.325l2.363-1.89a.5.5 0 0 1 .529-.06m7.137 2.096a.5.5 0 0 1 0 .708L12.207 8l1.647 1.646a.5.5 0 0 1-.708.708L11.5 8.707l-1.646 1.647a.5.5 0 0 1-.708-.708L10.793 8 9.146 6.354a.5.5 0 1 1 .708-.708L11.5 7.293l1.646-1.647a.5.5 0 0 1 .708 0",
+    volumeUpIcon: [
+        "M11.536 14.01A8.47 8.47 0 0 0 14.026 8a8.47 8.47 0 0 0-2.49-6.01l-.708.707A7.48 7.48 0 0 1 13.025 8c0 2.071-.84 3.946-2.197 5.303z",
+        "M10.121 12.596A6.48 6.48 0 0 0 12.025 8a6.48 6.48 0 0 0-1.904-4.596l-.707.707A5.48 5.48 0 0 1 11.025 8a5.48 5.48 0 0 1-1.61 3.89z",
+        "M8.707 11.182A4.5 4.5 0 0 0 10.025 8a4.5 4.5 0 0 0-1.318-3.182L8 5.525A3.5 3.5 0 0 1 9.025 8 3.5 3.5 0 0 1 8 10.475zM6.717 3.55A.5.5 0 0 1 7 4v8a.5.5 0 0 1-.812.39L3.825 10.5H1.5A.5.5 0 0 1 1 10V6a.5.5 0 0 1 .5-.5h2.325l2.363-1.89a.5.5 0 0 1 .529-.06"
+    ]
+}
+
+
 const mousePointer = sectionInfo[1].obj.querySelector(".mouse-cursor");
 const modal = document.getElementById("myModal");
 let currentDivIndex = 0;
@@ -85,10 +97,10 @@ window.addEventListener("click", function (event) {
         document.body.style.overflow = "auto";
     }
 })
-window.addEventListener("DOMContentLoaded", function(event){
+window.addEventListener("DOMContentLoaded", function (event) {
     const video = sectionInfo[1].obj.querySelector("video");
-    video.querySelectorAll("source")[0].setAttribute("src",`./video/${isMobile?"jabez_background_video_2_fontSize":"jabez_background_video_2"}.webm`);
-    video.querySelectorAll("source")[1].setAttribute("src",`./video/${isMobile?"jabez_background_video_2_fontSize":"jabez_background_video_2"}.mp4`);
+    video.querySelectorAll("source")[0].setAttribute("src", `./video/${isMobile ? "jabez_background_video_2_fontSize" : "jabez_background_video_2"}.webm`);
+    video.querySelectorAll("source")[1].setAttribute("src", `./video/${isMobile ? "jabez_background_video_2_fontSize" : "jabez_background_video_2"}.mp4`);
     video.load();
 });
 modal.querySelector(".modal-content").addEventListener("click", function (event) {
@@ -102,7 +114,7 @@ modal.querySelector(".modal-content").addEventListener("click", function (event)
     }
 });
 sectionInfo[1].obj.querySelector(".sticky-area").addEventListener("mousemove", function (event) {
-    if(mousePointer.classList.contains("hover") != true){
+    if (mousePointer.classList.contains("hover") != true) {
         mousePointer.classList.add("hover");
     }
 
@@ -127,7 +139,7 @@ sectionInfo[1].obj.querySelector(".sticky-area").addEventListener("mousemove", f
     // mousePointer.style.left = `${iconX + deltaX}px`;
     // mousePointer.style.top = `${iconY + deltaY}px`;
 });
-    
+
 sectionInfo[1].obj.querySelector(".content-area").addEventListener("mouseleave", function (event) {
     mousePointer.classList.remove("hover");
 });
@@ -138,12 +150,12 @@ sectionInfo[1].obj.querySelector(".content-area").addEventListener("click", func
     if (video.paused) {
         video.play();
         const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-        path.setAttribute("d","M5.5 3.5A1.5 1.5 0 0 1 7 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5m5 0A1.5 1.5 0 0 1 12 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5");
+        path.setAttribute("d", iconPathData.pauseIcon);
         mousePointer.replaceChildren(path);
     } else {
         video.pause();
         const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-        path.setAttribute("d","m11.596 8.697-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393");
+        path.setAttribute("d", iconPathData.playIcon);
         mousePointer.replaceChildren(path);
     }
 });
@@ -163,18 +175,18 @@ sectionInfo[1].obj.querySelector(".volume-control").addEventListener("click", fu
         this.replaceChildren();
         // 아이콘의 path를 바꾼다.
         const path1 = document.createElementNS("http://www.w3.org/2000/svg", "path");
-        path1.setAttribute("d","M11.536 14.01A8.47 8.47 0 0 0 14.026 8a8.47 8.47 0 0 0-2.49-6.01l-.708.707A7.48 7.48 0 0 1 13.025 8c0 2.071-.84 3.946-2.197 5.303z");
+        path1.setAttribute("d", iconPathData.volumeUpIcon[0]);
         const path2 = document.createElementNS("http://www.w3.org/2000/svg", "path");
-        path2.setAttribute("d","M10.121 12.596A6.48 6.48 0 0 0 12.025 8a6.48 6.48 0 0 0-1.904-4.596l-.707.707A5.48 5.48 0 0 1 11.025 8a5.48 5.48 0 0 1-1.61 3.89z");
+        path2.setAttribute("d", iconPathData.volumeUpIcon[1]);
         const path3 = document.createElementNS("http://www.w3.org/2000/svg", "path");
-        path3.setAttribute("d","M8.707 11.182A4.5 4.5 0 0 0 10.025 8a4.5 4.5 0 0 0-1.318-3.182L8 5.525A3.5 3.5 0 0 1 9.025 8 3.5 3.5 0 0 1 8 10.475zM6.717 3.55A.5.5 0 0 1 7 4v8a.5.5 0 0 1-.812.39L3.825 10.5H1.5A.5.5 0 0 1 1 10V6a.5.5 0 0 1 .5-.5h2.325l2.363-1.89a.5.5 0 0 1 .529-.06");
+        path3.setAttribute("d", iconPathData.volumeUpIcon[2]);
 
         this.replaceChildren(path1, path2, path3);
     } else {
         video.muted = true;
         // 아이콘의 path를 바꾼다.
         const path1 = document.createElementNS("http://www.w3.org/2000/svg", "path");
-        path1.setAttribute("d","M6.717 3.55A.5.5 0 0 1 7 4v8a.5.5 0 0 1-.812.39L3.825 10.5H1.5A.5.5 0 0 1 1 10V6a.5.5 0 0 1 .5-.5h2.325l2.363-1.89a.5.5 0 0 1 .529-.06m7.137 2.096a.5.5 0 0 1 0 .708L12.207 8l1.647 1.646a.5.5 0 0 1-.708.708L11.5 8.707l-1.646 1.647a.5.5 0 0 1-.708-.708L10.793 8 9.146 6.354a.5.5 0 1 1 .708-.708L11.5 7.293l1.646-1.647a.5.5 0 0 1 .708 0")
+        path1.setAttribute("d", iconPathData.muteIcon)
         this.replaceChildren(path1);
     }
 });
@@ -222,16 +234,16 @@ function resizeVideo() {
     const width = window.innerWidth;
     const height = window.innerHeight;
     const video = sectionInfo[1].obj.querySelector("video");
-    
+
     // 세로 모드일 때
     if (isMobile != true && (width > height)) {
-        if(video.classList.contains("object-fit-contain")){
+        if (video.classList.contains("object-fit-contain")) {
             video.classList.remove("object-fit-contain");
         }
         video.classList.add("object-fit-cover");
     }
-    else if(isMobile != true && (width < height)){
-        if(video.classList.contains("object-fit-cover")){
+    else if (isMobile != true && (width < height)) {
+        if (video.classList.contains("object-fit-cover")) {
             video.classList.remove("object-fit-cover");
         }
         video.classList.add("object-fit-contain");
@@ -299,57 +311,56 @@ async function fetchData(id) {
     }
 }
 
-function createCard(info,rowTag,id) {
+function createCard(info, rowTag, id) {
     // 카드 생성 로직
-        const memberYoutubeTitle = info.MemberYoutubeTitle;
-        const memberYoutubeThumnailPath = info.MemberYoutubeThumbnailLink;
-        const memberText = info.MemberText;
-        const youtubeLink = info.MemberYoutubeLink;
+    const memberYoutubeTitle = info.MemberYoutubeTitle;
+    const memberYoutubeThumnailPath = info.MemberYoutubeThumbnailLink;
+    const youtubeLink = info.MemberYoutubeLink;
 
-        const colTag = createElement('div', {
-            classList: ['col-md-4', 'card-default-setting', 'animation-fadeIn-down-bounce'],
-            style: { animationDelay: `${(id%3>0 ? id%3 : 3) * 0.1}s` }
-        });
-    
-        const cardTag = createElement('div', { classList: ['card', 'shadow-sm', 'mb-3'], 'data-src': youtubeLink });
-        const cardImageTag = createElement('img', { src: memberYoutubeThumnailPath, classList: ['card-img-top'], style: { width: '100%', height: '14.5rem' } });
-        const cardBodyTag = createElement('div', { classList: ['card-body'] });
-    
-        const cardTitleTag = createElement('h5', { classList: ['card-title'] }, [memberYoutubeTitle]);
+    const colTag = createElement('div', {
+        classList: ['col-md-4', 'card-default-setting', 'animation-fadeIn-down-bounce'],
+        style: { animationDelay: `${(id % 3 > 0 ? id % 3 : 3) * 0.1}s` }
+    });
 
-        cardBodyTag.appendChild(cardTitleTag);
-        cardTag.appendChild(cardImageTag);
-        cardTag.appendChild(cardBodyTag);
-        cardTag.addEventListener("click", function () {
-            const width = window.innerWidth;
-            const height = window.innerHeight;
-            const iframe = modal.querySelector("iframe");
-            // 가로 모드일 때
-            if (width > height) {
-                const iframeHeight = height * 0.8;
-                const iframeWidth = (iframeHeight * youtubeIframeInfo.widthRatio) / youtubeIframeInfo.heightRatio;
-                iframe.style.width = iframeWidth + "px";
-                iframe.style.height = iframeHeight + "px";
-            } else if (width < height) {
-                const iframeWidth = isMobile ? width * 0.9 : width * 0.8;
-                const iframeHeight = (iframeWidth * youtubeIframeInfo.heightRatio) / youtubeIframeInfo.widthRatio;
-                iframe.style.width = iframeWidth + "px";
-                iframe.style.height = iframeHeight + "px";
-            }
-            iframe.src = this.getAttribute("data-src");
+    const cardTag = createElement('div', { classList: ['card', 'shadow-sm', 'mb-3'], 'data-src': youtubeLink });
+    const cardImageTag = createElement('img', { src: memberYoutubeThumnailPath, classList: ['card-img-top'], style: { width: '100%', height: '14.5rem' } });
+    const cardBodyTag = createElement('div', { classList: ['card-body'] });
 
-            if (modal.classList.contains("d-none")) {
-                modal.classList.remove("d-none");
-            }
-            modal.classList.add("d-flex");
-            document.body.style.overflow = "hidden";
-        });
+    const cardTitleTag = createElement('h5', { classList: ['card-title'] }, [memberYoutubeTitle]);
 
-        colTag.appendChild(cardTag);
-        rowTag.appendChild(colTag);
+    cardBodyTag.appendChild(cardTitleTag);
+    cardTag.appendChild(cardImageTag);
+    cardTag.appendChild(cardBodyTag);
+    cardTag.addEventListener("click", function () {
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+        const iframe = modal.querySelector("iframe");
+        // 가로 모드일 때
+        if (width > height) {
+            const iframeHeight = height * 0.8;
+            const iframeWidth = (iframeHeight * youtubeIframeInfo.widthRatio) / youtubeIframeInfo.heightRatio;
+            iframe.style.width = iframeWidth + "px";
+            iframe.style.height = iframeHeight + "px";
+        } else if (width < height) {
+            const iframeWidth = isMobile ? width * 0.9 : width * 0.8;
+            const iframeHeight = (iframeWidth * youtubeIframeInfo.heightRatio) / youtubeIframeInfo.widthRatio;
+            iframe.style.width = iframeWidth + "px";
+            iframe.style.height = iframeHeight + "px";
+        }
+        iframe.src = this.getAttribute("data-src");
+
+        if (modal.classList.contains("d-none")) {
+            modal.classList.remove("d-none");
+        }
+        modal.classList.add("d-flex");
+        document.body.style.overflow = "hidden";
+    });
+
+    colTag.appendChild(cardTag);
+    rowTag.appendChild(colTag);
 }
 
-async function loadAndCreateCards(id,rowTag) {
+async function loadAndCreateCards(id, rowTag) {
     const json = await fetchData(id);
 
     // 데이터가 빈 배열이면 더이상 데이터를 가져오지 않는다.
@@ -359,7 +370,7 @@ async function loadAndCreateCards(id,rowTag) {
     }
 
     json.forEach((info) => {
-        createCard(info,rowTag,id);
+        createCard(info, rowTag, id);
     });
 }
 
@@ -377,7 +388,7 @@ async function preloadImages() {
             if (infiniteScrollInfo.isfetching == false) {
                 break;
             }
-            await loadAndCreateCards(infiniteScrollInfo.id,rowTag);
+            await loadAndCreateCards(infiniteScrollInfo.id, rowTag);
             infiniteScrollInfo.id++;
         }
         //rowTag 내 Coltag가 1개라도 있으면 rowTag를 contentArea에 추가한다.
@@ -460,7 +471,7 @@ function handleClassList(message, addClass, removeClass) {
     if (message.classList.contains(removeClass)) {
         message.classList.remove(removeClass);
     }
-    if(message.classList.contains(addClass) != true){
+    if (message.classList.contains(addClass) != true) {
         message.classList.add(addClass);
     }
 }
@@ -468,7 +479,7 @@ function handleAnimation(message, addAnimation, removeAnimation) {
     if (message.classList.contains(removeAnimation)) {
         message.classList.remove(removeAnimation);
     }
-    if(message.classList.contains(addAnimation) != true){
+    if (message.classList.contains(addAnimation) != true) {
         message.classList.add(addAnimation);
     }
 }
@@ -486,40 +497,40 @@ function playMobileAnimation(activeSectionIndex, previousHeight, direction) {
                 const message1 = messageInSection.obj[0];
                 const message2 = messageInSection.obj[1];
                 const animationValues = messageInSection.values;
-                if (0.05<scrollRateInSection && scrollRateInSection <= animationValues.message1_fadeIn.end) {
-                    if(direction == 1){
-                        handleAnimation(message1,"animation-fadeIn-down","animation-fadeOut-down");
-                    }else if(direction == 0){
-                        handleAnimation(message1,"animation-fadeOut-down","animation-fadeIn-down");
+                if (0.05 < scrollRateInSection && scrollRateInSection <= animationValues.message1_fadeIn.end) {
+                    if (direction == 1) {
+                        handleAnimation(message1, "animation-fadeIn-down", "animation-fadeOut-down");
+                    } else if (direction == 0) {
+                        handleAnimation(message1, "animation-fadeOut-down", "animation-fadeIn-down");
                     }
-                } else if (animationValues.message1_fadeOut.start<=scrollRateInSection && scrollRateInSection<= animationValues.message1_fadeOut.end) {
-                    if(direction == 1){
-                        handleAnimation(message1,"animation-fadeOut-down","animation-fadeIn-down");
-                    }else if(direction == 0){
-                        handleAnimation(message1,"animation-fadeIn-down","animation-fadeOut-down");
-                    }
-                }
-                if (animationValues.message1_fadeOut.end<scrollRateInSection && scrollRateInSection<animationValues.message2_fadeIn.start) {
-                    if(direction == 1){
-                        handleAnimation(message2,"animation-fadeIn-down","animation-fadeOut-down");
-                    }else if(direction == 0){
-                        handleAnimation(message2,"animation-fadeOut-down","animation-fadeIn-down");
+                } else if (animationValues.message1_fadeOut.start <= scrollRateInSection && scrollRateInSection <= animationValues.message1_fadeOut.end) {
+                    if (direction == 1) {
+                        handleAnimation(message1, "animation-fadeOut-down", "animation-fadeIn-down");
+                    } else if (direction == 0) {
+                        handleAnimation(message1, "animation-fadeIn-down", "animation-fadeOut-down");
                     }
                 }
-                else if (animationValues.message2_fadeIn.start<=scrollRateInSection && scrollRateInSection<= animationValues.message2_fadeIn.end) {
-                    if(direction == 1){
-                        handleAnimation(message2,"animation-fadeIn-down","animation-fadeOut-down");
-                    } else if(direction == 0){
-                        handleAnimation(message2,"animation-fadeOut-down","animation-fadeIn-down");
-                    }
-                } else if(animationValues.message2_fadeOut.start<=scrollRateInSection && scrollRateInSection<= animationValues.message2_fadeOut.end ) {
-                    if(direction == 1){
-                        handleAnimation(message2,"animation-fadeOut-down","animation-fadeIn-down");
-                    }else if(direction==0){
-                        handleAnimation(message2,"animation-fadeIn-down","animation-fadeOut-down");
+                if (animationValues.message1_fadeOut.end < scrollRateInSection && scrollRateInSection < animationValues.message2_fadeIn.start) {
+                    if (direction == 1) {
+                        handleAnimation(message2, "animation-fadeIn-down", "animation-fadeOut-down");
+                    } else if (direction == 0) {
+                        handleAnimation(message2, "animation-fadeOut-down", "animation-fadeIn-down");
                     }
                 }
-                if(scrollRateInSection>animationValues.message2_fadeOut.end){
+                else if (animationValues.message2_fadeIn.start <= scrollRateInSection && scrollRateInSection <= animationValues.message2_fadeIn.end) {
+                    if (direction == 1) {
+                        handleAnimation(message2, "animation-fadeIn-down", "animation-fadeOut-down");
+                    } else if (direction == 0) {
+                        handleAnimation(message2, "animation-fadeOut-down", "animation-fadeIn-down");
+                    }
+                } else if (animationValues.message2_fadeOut.start <= scrollRateInSection && scrollRateInSection <= animationValues.message2_fadeOut.end) {
+                    if (direction == 1) {
+                        handleAnimation(message2, "animation-fadeOut-down", "animation-fadeIn-down");
+                    } else if (direction == 0) {
+                        handleAnimation(message2, "animation-fadeIn-down", "animation-fadeOut-down");
+                    }
+                }
+                if (scrollRateInSection > animationValues.message2_fadeOut.end) {
                     messageInSection.obj.forEach((message) => {
                         if (message.classList.contains("animation-fadeIn-down")) {
                             message.classList.remove("animation-fadeIn-down");
@@ -534,46 +545,46 @@ function playMobileAnimation(activeSectionIndex, previousHeight, direction) {
                 const message1 = messageInSection.obj[0];
                 const message2 = messageInSection.obj[1];
                 const animationValues = messageInSection.values;
-                if (0.05<scrollRateInSection && scrollRateInSection <= animationValues.message1_fadeIn.end) {
-                    if(direction == 1){
-                        handleAnimation(message1,"animation-fadeIn-down","animation-fadeOut-down");
-                    }else if(direction == 0){
-                        handleAnimation(message1,"animation-fadeOut-down","animation-fadeIn-down");
+                if (0.05 < scrollRateInSection && scrollRateInSection <= animationValues.message1_fadeIn.end) {
+                    if (direction == 1) {
+                        handleAnimation(message1, "animation-fadeIn-down", "animation-fadeOut-down");
+                    } else if (direction == 0) {
+                        handleAnimation(message1, "animation-fadeOut-down", "animation-fadeIn-down");
                     }
-                } else if (animationValues.message1_fadeOut.start<=scrollRateInSection && scrollRateInSection<= animationValues. message1_fadeOut.end) {
-                    if(direction == 1 && message1.style){
-                        handleAnimation(message1,"animation-fadeOut-down","animation-fadeIn-down");
-                    }else if(direction == 0){
-                        handleAnimation(message1,"animation-fadeIn-down","animation-fadeOut-down");
-                    }
-                }
-                if (animationValues.message1_fadeOut.end<scrollRateInSection && scrollRateInSection<= animationValues.message2_fadeIn.start) {
-                    if(direction == 1){
-                        handleAnimation(message2,"animation-fadeIn-down","animation-fadeOut-down");
-                    }else if(direction == 0){
-                        handleAnimation(message2,"animation-fadeOut-down","animation-fadeIn-down");
+                } else if (animationValues.message1_fadeOut.start <= scrollRateInSection && scrollRateInSection <= animationValues.message1_fadeOut.end) {
+                    if (direction == 1 && message1.style) {
+                        handleAnimation(message1, "animation-fadeOut-down", "animation-fadeIn-down");
+                    } else if (direction == 0) {
+                        handleAnimation(message1, "animation-fadeIn-down", "animation-fadeOut-down");
                     }
                 }
-                else if (animationValues.message2_fadeIn.start<=scrollRateInSection && scrollRateInSection<= animationValues.message2_fadeIn.end) {
-                    if(direction == 1){
-                        handleAnimation(message2,"animation-fadeIn-down","animation-fadeOut-down");
-                    } else if(direction == 0){
-                        handleAnimation(message2,"animation-fadeOut-down","animation-fadeIn-down");
+                if (animationValues.message1_fadeOut.end < scrollRateInSection && scrollRateInSection <= animationValues.message2_fadeIn.start) {
+                    if (direction == 1) {
+                        handleAnimation(message2, "animation-fadeIn-down", "animation-fadeOut-down");
+                    } else if (direction == 0) {
+                        handleAnimation(message2, "animation-fadeOut-down", "animation-fadeIn-down");
+                    }
+                }
+                else if (animationValues.message2_fadeIn.start <= scrollRateInSection && scrollRateInSection <= animationValues.message2_fadeIn.end) {
+                    if (direction == 1) {
+                        handleAnimation(message2, "animation-fadeIn-down", "animation-fadeOut-down");
+                    } else if (direction == 0) {
+                        handleAnimation(message2, "animation-fadeOut-down", "animation-fadeIn-down");
                         if (message2.classList.contains("animation-fadeIn-down")) {
                             message2.classList.remove("animation-fadeIn-down");
                         }
-                        if(message2.classList.contains("animation-fadeOut-down") != true){
+                        if (message2.classList.contains("animation-fadeOut-down") != true) {
                             message2.classList.add("animation-fadeOut-down");
                         }
                     }
-                } else if(animationValues.message2_fadeOut.start<=scrollRateInSection && scrollRateInSection<= animationValues.message2_fadeOut.end ) {
-                    if(direction == 1){
-                        handleAnimation(message2,"animation-fadeOut-down","animation-fadeIn-down");
-                    }else if(direction==0){
-                        handleAnimation(message2,"animation-fadeIn-down","animation-fadeOut-down");
+                } else if (animationValues.message2_fadeOut.start <= scrollRateInSection && scrollRateInSection <= animationValues.message2_fadeOut.end) {
+                    if (direction == 1) {
+                        handleAnimation(message2, "animation-fadeOut-down", "animation-fadeIn-down");
+                    } else if (direction == 0) {
+                        handleAnimation(message2, "animation-fadeIn-down", "animation-fadeOut-down");
                     }
                 }
-                if(scrollRateInSection>animationValues.message2_fadeOut.end){
+                if (scrollRateInSection > animationValues.message2_fadeOut.end) {
                     messageInSection.obj.forEach((message) => {
                         if (message.classList.contains("animation-fadeIn-down")) {
                             message.classList.remove("animation-fadeIn-down");
@@ -629,12 +640,13 @@ document.addEventListener("scroll", (e) => {
     if (isMobile != true) {
         playAnimation(activeSectionIndex, previousHeight);
         controlNavbar();
-    }else if(isMobile){
+    } else if (isMobile) {
         const direction = controlNavbar();
         playMobileAnimation(activeSectionIndex, previousHeight, direction);
-        
+
     }
 });
+
 
 const intersectionObserverSection3 = new IntersectionObserver((entries, observer) => {
     const [entry] = entries;
@@ -644,18 +656,57 @@ const intersectionObserverSection3 = new IntersectionObserver((entries, observer
     let animationDelayTime = 0.1;
     // scroll-section-3이 닿으면 title과 버튼을 보여준다.
     if (entry.isIntersecting) {
-        handleAnimation(sectionTitle,"animation-fadeIn-down","animation-fadeOut-down");
-        handleAnimation(buttonDiv,"animation-fadeIn-down","animation-fadeOut-down");
+        handleAnimation(sectionTitle, "animation-fadeIn-down", "animation-fadeOut-down");
+        handleAnimation(buttonDiv, "animation-fadeIn-down", "animation-fadeOut-down");
         buttonDiv.style.animationDelay = `${animationDelayTime}s`;
     }
     // scroll-section-3에서 벗어나면 title과 버튼을 숨긴다.
     else if (entry.isIntersecting == false) {
-        handleAnimation(sectionTitle,"animation-fadeOut-down","animation-fadeIn-down");
-        handleAnimation(buttonDiv,"animation-fadeOut-down","animation-fadeIn-down");
+        handleAnimation(sectionTitle, "animation-fadeOut-down", "animation-fadeIn-down");
+        handleAnimation(buttonDiv, "animation-fadeOut-down", "animation-fadeIn-down");
     }
 }, { threshold: 0.5 })
 
 intersectionObserverSection3.observe(document.querySelector("#scroll-section-3"));
+
+
+const intersectionObserverSection2 = new IntersectionObserver((entries, observer) => {
+    const [entry] = entries;
+    const video = entry.target.querySelector("video");
+    const volumeControl = sectionInfo[1].obj.querySelector(".volume-control");
+
+    // scroll-section-2가 닿으면 재생하고, 닿지 않으면 video를 멈추고, 음소거한다.
+    if (entry.isIntersecting) {
+        if (video.paused && video.muted) {
+            video.play();
+            // 아이콘의 path를 바꾼다.
+            const path1 = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            path1.setAttribute("d", iconPathData.pauseIcon);
+            const path2 = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            path2.setAttribute("d", iconPathData.muteIcon);
+            mousePointer.replaceChildren(path1);
+            volumeControl.replaceChildren(path2);
+        }
+    }
+    else if (entry.isIntersecting == false) {
+        if (video.paused && video.muted) {
+            return;
+        }
+        video.pause();
+        video.muted = true;
+
+        // 아이콘의 path를 바꾼다.
+        const path1 = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        path1.setAttribute("d", iconPathData.playIcon);
+        const path2 = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        path2.setAttribute("d", iconPathData.muteIcon);
+
+        mousePointer.replaceChildren(path1);
+        volumeControl.replaceChildren(path2);
+    }
+}, { threshold: 0 })
+
+intersectionObserverSection2.observe(document.querySelector("#scroll-section-2"));
 
 
 
@@ -666,7 +717,7 @@ const intersectionObserverSection4 = new IntersectionObserver((entries, observer
         const sectionTitle = contentArea.querySelector("h2");
         const rows = contentArea.querySelectorAll(".row");
         let animationDelayTime = 0;
-        handleAnimation(sectionTitle,"animation-fadeIn-noMove","animation-fadeOut-noMove");
+        handleAnimation(sectionTitle, "animation-fadeIn-noMove", "animation-fadeOut-noMove");
         rows.forEach((row) => {
             const cols = row.querySelectorAll(".col-md-4")
             cols.forEach((col) => {
@@ -686,11 +737,11 @@ const intersectionObserverSection4 = new IntersectionObserver((entries, observer
         const sectionTitle = contentArea.querySelector("h2");
         const rows = contentArea.querySelectorAll(".row");
 
-        handleAnimation(sectionTitle,"animation-fadeOut-noMove","animation-fadeIn-noMove");
+        handleAnimation(sectionTitle, "animation-fadeOut-noMove", "animation-fadeIn-noMove");
         rows.forEach((row) => {
             const cols = row.querySelectorAll(".col-md-4")
             cols.forEach((col) => {
-                handleAnimation(col,"animation-fadeOut-down-bounce","animation-fadeIn-down-bounce");
+                handleAnimation(col, "animation-fadeOut-down-bounce", "animation-fadeIn-down-bounce");
             })
         })
     }
@@ -711,7 +762,7 @@ const intersectionObserverUnlimitedScroll = new IntersectionObserver(async (entr
             if (infiniteScrollInfo.isfetching == false) {
                 break;
             }
-            await loadAndCreateCards(infiniteScrollInfo.id,rowTag);
+            await loadAndCreateCards(infiniteScrollInfo.id, rowTag);
             infiniteScrollInfo.id++;
         }
         if (rowTag.querySelectorAll(".col-md-4").length > 0) {

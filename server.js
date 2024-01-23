@@ -5,15 +5,21 @@ const app = express();
 
 app.use(morgan('combined'));
 
-// 서버를 8080 포트로 실행
-app.listen(8080, () => {
-  console.log('server running on port 8080');
+// 서버를 80 포트로 실행
+app.listen(80, () => {
+  console.log('server running on port 80');
 });
 
 // client가 '/'으로 접속하면 index.html을 전송
 app.get('/', (req, res) => {
   res.sendFile(__dirname + '/index.html');
 });
+
+// client가 '/admin'으로 접속하면 admin.html을 전송
+app.get('/admin', (req, res) => {
+  res.sendFile(__dirname + '/admin.html');
+});
+
 
 // public 폴더를 static 폴더로 지정
 app.use(express.static('public'));
@@ -26,7 +32,7 @@ app.get('/api/memberData/:id', (req, res) => {
       console.error(err.message);
     }else{
       console.log('Connected to the database.');
-    }
+    } 
   });
   // 데이터베이스에서 데이터를 가져옴
   db.all(`SELECT * FROM Member_Information_tbl WHERE ID = ${id}`, (err, rows) => {
