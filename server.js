@@ -6,7 +6,7 @@ const app = express();
 app.use(morgan('combined'));
 
 // 서버를 80 포트로 실행
-app.listen(8080, () => {
+app.listen(80, () => {
   console.log('server running on port 80');
 });
 
