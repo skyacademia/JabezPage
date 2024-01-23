@@ -5,9 +5,9 @@ const app = express();
 
 app.use(morgan('combined'));
 
-// 서버를 8080 포트로 실행
-app.listen(8080, () => {
-  console.log('server running on port 8080');
+// 서버를 80 포트로 실행
+app.listen(80, () => {
+  console.log('server running on port 80');
 });
 
 // client가 '/'으로 접속하면 index.html을 전송
