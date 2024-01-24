@@ -17,7 +17,7 @@ app.get('/', (req, res) => {
 
 // client가 '/admin'으로 접속하면 admin.html을 전송
 app.get('/admin', (req, res) => {
-  res.sendFile(__dirname + '/admin.html');
+  res.sendFile(__dirname + '/adminSignIn.html');
 });
 
 

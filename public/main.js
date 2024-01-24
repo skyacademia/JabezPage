@@ -17,7 +17,7 @@ const sectionInfo = [
     },
     {
         // section-2
-        multipleValue: 3,
+        multipleValue: isMobile ? 3 : 2,
         obj: document.querySelector("#scroll-section-2"),
         values: {}
     },
