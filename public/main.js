@@ -2,7 +2,7 @@ const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent); // ì•ˆë“
 const sectionInfo = [
     {
         // section-1
-        multipleValue: isMobile ? 5 : 3,
+        multipleValue: 3,
         obj: document.querySelector("#scroll-section-1"),
         values: {
             message1_fadeIn_opacity: [0, 1, { start: 0, end: 0.14 }],

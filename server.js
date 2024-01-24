@@ -2,12 +2,20 @@ const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
 const morgan = require('morgan');
 const bodyParser = require('body-parser');
+const session = require('express-session');
 const app = express();
 let isLogin = false;
 app.use(morgan('combined'));
 
 // body-parser를 사용하기 위한 코드
 app.use(bodyParser.urlencoded({extended: false}));
+
+// session을 사용하기 위한 코드
+app.use(session({
+  secret: 'yavesGroupSessionSecretKey',
+  resave: false,
+  saveUninitialized: true
+}));
 
 // 서버를 80 포트로 실행
 app.listen(8080, () => {
