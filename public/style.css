@@ -84,10 +84,11 @@ nav {
     animation-fill-mode: forwards;
 }
 
-#scroll-section-1 .content,
+/* 현재(2024/01/24) 애니메이션 미사용으로 주석처리함 */
+/* #scroll-section-1 .content,
 #scroll-section-2 .content{
     opacity: 0;
-}
+} */
 
 #scroll-section-4 .content-area h2 {
     opacity: 0;

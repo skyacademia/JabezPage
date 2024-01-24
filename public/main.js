@@ -5,14 +5,14 @@ const sectionInfo = [
         multipleValue: 3,
         obj: document.querySelector("#scroll-section-1"),
         values: {
-            message1_fadeIn_opacity: [0, 1, { start: 0, end: 0.14 }],
-            message1_fadeIn_transform: [10, 0, { start: 0, end: 0.14 }],
-            message1_fadeOut_opacity: [1, 0, { start: 0.18, end: 0.32 }],
-            message1_fadeOut_transform: [0, -10, { start: 0.18, end: 0.32 }],
-            message2_fadeIn_opacity: [0, 1, { start: 0.34, end: 0.48 }],
-            message2_fadeIn_transform: [10, 0, { start: 0.34, end: 0.48 }],
-            message2_fadeOut_opacity: [1, 0, { start: 0.52, end: 0.66 }],
-            message2_fadeOut_transform: [0, -10, { start: 0.52, end: 0.66 }],
+            // message1_fadeIn_opacity: [0, 1, { start: 0, end: 0.14 }],
+            // message1_fadeIn_transform: [10, 0, { start: 0, end: 0.14 }],
+            // message1_fadeOut_opacity: [1, 0, { start: 0.18, end: 0.32 }],
+            // message1_fadeOut_transform: [0, -10, { start: 0.18, end: 0.32 }],
+            // message2_fadeIn_opacity: [0, 1, { start: 0.34, end: 0.48 }],
+            // message2_fadeIn_transform: [10, 0, { start: 0.34, end: 0.48 }],
+            // message2_fadeOut_opacity: [1, 0, { start: 0.52, end: 0.66 }],
+            // message2_fadeOut_transform: [0, -10, { start: 0.52, end: 0.66 }],
         }
     },
     {
@@ -398,7 +398,7 @@ async function preloadImages() {
     }
 }
 
-history.scrollRestoration = "manual";
+history.scrollRestoration = "manual"; // 뒤로가기 시 스크롤 위치를 유지하지 않음
 window.addEventListener("load", (e) => {
     preloadImages()
 })
@@ -635,15 +635,15 @@ function controlNavbar() {
 }
 
 document.addEventListener("scroll", (e) => {
-    const activeSectionIndex = findActiveSection();
-    const previousHeight = calculatePriviousHeight(activeSectionIndex);
+    // 현재(2024/01/24) 애니메이션 미사용
+    // const activeSectionIndex = findActiveSection();
+    // const previousHeight = calculatePriviousHeight(activeSectionIndex); 
     if (isMobile != true) {
-        playAnimation(activeSectionIndex, previousHeight);
+        // playAnimation(activeSectionIndex, previousHeight); // 현재(2024/01/24) 애니메이션 미사용
         controlNavbar();
     } else if (isMobile) {
         const direction = controlNavbar();
-        playMobileAnimation(activeSectionIndex, previousHeight, direction);
-
+        // playMobileAnimation(activeSectionIndex, previousHeight, direction); // 현재(2024/01/24) 애니메이션 미사용
     }
 });
 
