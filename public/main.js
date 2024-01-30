@@ -59,10 +59,34 @@ const messageInfo = [
 
     },
 ]
-const infiniteScrollInfo = {
-    id: 1,
-    isfetching: true,
+class InfiniteScrollInfo {
+    constructor() {
+        this.id = 0;
+        this.isfetching = true;
+    }
+
+    incrementId() {
+        this.id++;
+    }
+
+    changeId(id) {
+        this.id = id;
+    }
+
+    stopFetching() {
+        this.isfetching = false;
+    }
+
+    getIsFetching() {
+        return this.isfetching;
+    }
+
+    getId() {
+        return this.id;
+    }
+
 }
+
 const youtubeIframeInfo = {
     widthRatio: 16,
     heightRatio: 9,
@@ -82,7 +106,7 @@ const iconPathData = {
     ]
 }
 
-
+const infiniteScrollInfo = new InfiniteScrollInfo();
 const mousePointer = sectionInfo[1].obj.querySelector(".mouse-cursor");
 const modal = document.getElementById("myModal");
 let currentDivIndex = 0;
@@ -97,6 +121,23 @@ window.addEventListener("click", function (event) {
         document.body.style.overflow = "auto";
     }
 })
+
+// 아이콘을 클릭하면 section으로 이동
+const scrollDownIcons = document.querySelectorAll(".scrollDown");
+for(let i = 0; i < scrollDownIcons.length; i++) {
+    scrollDownIcons[i].addEventListener("click", function (event) {
+        const section = document.querySelector(`#scroll-section-${i + 2}`);
+        window.scrollTo({ top: section.offsetTop, behavior: "smooth" });
+    });
+}   
+    
+// osnt scrollDownIcons = document.querySelectorAll(".scrollDown").forEach((element) => {
+//     element.addEventListener("click", function (event) {
+//         const section = document.querySelector(this.getAttribute("data-section"));
+//         window.scrollTo({ top: section.offsetTop, behavior: "smooth" });
+//     });
+// });
+
 window.addEventListener("DOMContentLoaded", function (event) {
     const video = sectionInfo[1].obj.querySelector("video");
     video.querySelectorAll("source")[0].setAttribute("src", `./video/${isMobile ? "jabez_background_video_2_fontSize" : "jabez_background_video_2"}.webm`);
@@ -269,12 +310,33 @@ function resizeSection() {
         }
     }
 }
+
+// 모바일에서 가로모드일 때 scroll-section-1의 메시지의 위치를 조절
+function resizeMessage() {
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+    const message1 = sectionInfo[0].obj.querySelectorAll(".content")[0];
+    const message2 = sectionInfo[0].obj.querySelectorAll(".content")[1];
+
+    // 세로 모드일 때
+    if (isMobile && window.matchMedia("(orientation: portrait)").matches) {
+        message1.style.transform = "translate(0, 0)";
+        message2.style.transform = "translate(0, 0)";
+    }
+    // 가로 모드일 때
+    else if (isMobile && window.matchMedia("(orientation: landscape)").matches) {
+        message1.style.transform = "translate(0, 10rem)";
+        message2.style.transform = "translate(0, 10rem)";
+    }
+}
+
 resizeSection();
 resizeVideo();
 window.addEventListener("resize", () => {
     resizeSection();
     resizeIframe();
     resizeVideo();
+    resizeMessage();
 });
 
 function createElement(tagName, attributes, children) {
@@ -316,13 +378,15 @@ function createCard(info, rowTag, id) {
     const memberYoutubeTitle = info.MemberYoutubeTitle;
     const memberYoutubeThumnailPath = info.MemberYoutubeThumbnailLink;
     const youtubeLink = info.MemberYoutubeLink;
+    const _id = info.ID;
 
     const colTag = createElement('div', {
-        classList: ['col-md-4', 'card-default-setting', 'animation-fadeIn-down-bounce'],
-        style: { animationDelay: `${(id % 3 > 0 ? id % 3 : 3) * 0.1}s` }
+        classList: ['col', 'card-default-setting', 'animation-fadeIn-down-bounce'],
+        style: { animationDelay: `${(id % 3 > 0 ? id % 3 : 3) * 0.1}s` },
+        id: `${_id}`
     });
 
-    const cardTag = createElement('div', { classList: ['card', 'shadow-sm', 'mb-3'], 'data-src': youtubeLink });
+    const cardTag = createElement('div', { classList: ['card', 'shadow-sm', 'mb-3'], 'data-src': youtubeLink});
     const cardImageTag = createElement('img', { src: memberYoutubeThumnailPath, classList: ['card-img-top'], style: { width: '100%', height: '14.5rem' } });
     const cardBodyTag = createElement('div', { classList: ['card-body'] });
 
@@ -365,7 +429,7 @@ async function loadAndCreateCards(id, rowTag) {
 
     // 데이터가 빈 배열이면 더이상 데이터를 가져오지 않는다.
     if (json.length === 0) {
-        infiniteScrollInfo.isfetching = false;
+        infiniteScrollInfo.stopFetching();
         return;
     }
 
@@ -377,23 +441,15 @@ async function loadAndCreateCards(id, rowTag) {
 // 페이지 처음 로딩 시 이미지를 불러오기 위해 사용
 async function preloadImages() {
     // id변수를 활용해서 /api/centerData/로 데이터를 ajax 요청한다.
-    if (infiniteScrollInfo.isfetching) {
-        const contentArea = document.querySelector("#scroll-section-4").querySelector(".content-area");
-        const rowTag = createElement('div', {
-            classList: ['row', 'mb-md-3']
-        });
-
+    if (infiniteScrollInfo.getIsFetching() == true) {
+        const row = document.querySelector("#scroll-section-4").querySelector(".row");
         // id변수를 활용해서 /data로 데이터를 ajax 요청한다.
         for (let i = 0; i < 6; i++) {
-            if (infiniteScrollInfo.isfetching == false) {
+            if (infiniteScrollInfo.getIsFetching() == false) {
                 break;
             }
-            await loadAndCreateCards(infiniteScrollInfo.id, rowTag);
-            infiniteScrollInfo.id++;
-        }
-        //rowTag 내 Coltag가 1개라도 있으면 rowTag를 contentArea에 추가한다.
-        if (rowTag.querySelectorAll(".col-md-4").length > 0) {
-            contentArea.appendChild(rowTag);
+            await loadAndCreateCards(infiniteScrollInfo.getId(), row);
+            infiniteScrollInfo.changeId(document.querySelector(".col:last-child").getAttribute("id"));
         }
     }
 }
@@ -651,8 +707,8 @@ document.addEventListener("scroll", (e) => {
 const intersectionObserverSection3 = new IntersectionObserver((entries, observer) => {
     const [entry] = entries;
     const contentArea = entry.target.querySelector(".content-area");
-    const sectionTitle = contentArea.querySelector("h2");
-    const buttonDiv = contentArea.querySelector("div");
+    const sectionTitle = contentArea.querySelectorAll("div")[0];
+    const buttonDiv = contentArea.querySelectorAll("div")[1];
     let animationDelayTime = 0.1;
     // scroll-section-3이 닿으면 title과 버튼을 보여준다.
     if (entry.isIntersecting) {
@@ -751,24 +807,17 @@ intersectionObserverSection4.observe(document.querySelector("#scroll-section-4")
 
 const intersectionObserverUnlimitedScroll = new IntersectionObserver(async (entries, observer) => {
     const [entry] = entries;
-    if (entry.isIntersecting && infiniteScrollInfo.isfetching) {
-        const contentArea = document.querySelector("#scroll-section-4").querySelector(".content-area");
-        const rowTag = createElement('div', {
-            classList: ['row', 'mb-md-3']
-        });
+    if (entry.isIntersecting && (infiniteScrollInfo.getIsFetching() == true)){
+        const row = document.querySelector("#scroll-section-4").querySelector(".row");
 
         // id변수를 활용해서 /data로 데이터를 ajax 요청한다.
         for (let i = 0; i < 3; i++) {
-            if (infiniteScrollInfo.isfetching == false) {
+            if (infiniteScrollInfo.getIsFetching() == false) {
                 break;
             }
-            await loadAndCreateCards(infiniteScrollInfo.id, rowTag);
-            infiniteScrollInfo.id++;
+            await loadAndCreateCards(infiniteScrollInfo.getId(), row);
+            infiniteScrollInfo.changeId(document.querySelector(".col:last-child").getAttribute("id"));
         }
-        if (rowTag.querySelectorAll(".col-md-4").length > 0) {
-            contentArea.appendChild(rowTag);
-        }
-        contentArea.appendChild(rowTag);
     }
 }, { threshold: 1.0 })
 

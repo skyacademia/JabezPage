@@ -157,6 +157,22 @@ nav {
     cursor: pointer;
 }
 
+.scrollDownArea{
+    z-index: 10;
+    height: 49.5px;
+    bottom: 5rem;
+}
+
+.scrollDown{
+    position: relative;
+    z-index: 20;
+    cursor: pointer;
+    fill: white;
+    transition: all 0.5s;
+    animation: moveUpDown 2s infinite alternate;
+    animation-timing-function: ease-in-out;
+}
+
 @keyframes fadeInRight {
     from {
         opacity: 0;
@@ -286,5 +302,19 @@ nav {
 
     to {
         opacity: 0;
+    }
+}
+
+@keyframes moveUpDown {
+    0% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-1vh);
+    }
+
+    100% {
+        transform: translateY(0);
     }
 }
