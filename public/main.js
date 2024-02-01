@@ -1,3 +1,4 @@
+
 const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent); // 안드로이드 아이폰을 검사해 체크
 const sectionInfo = [
     {
@@ -19,7 +20,6 @@ const sectionInfo = [
         // section-2
         multipleValue: 2,
         obj: document.querySelector("#scroll-section-2"),
-        values: {}
     },
     {
         // section-3
@@ -30,6 +30,21 @@ const sectionInfo = [
         // section-4
         multipleValue: 0,
         obj: document.querySelector("#scroll-section-4"),
+    },
+    {
+        // section-5
+        multipleValue: 0,
+        obj: document.querySelector("#scroll-section-5"),
+    },
+    {
+        // section-6
+        multipleValue: 0,
+        obj: document.querySelector("#scroll-section-6"),
+    },
+    {
+        // section-7
+        multipleValue: 0,
+        obj: document.querySelector("#scroll-section-7"),
     },
 ]
 const messageInfo = [
@@ -59,10 +74,12 @@ const messageInfo = [
 
     },
 ]
-class InfiniteScrollInfo {
-    constructor() {
+class sectionInfiniteScrollInfo {
+    constructor(sectionId) {
         this.id = 0;
+        this.sectionId = sectionId;
         this.isfetching = true;
+        this.sectionObj = sectionInfo.find((section) => section.obj.getAttribute("data-contentSectionId") == sectionId).obj;
     }
 
     incrementId() {
@@ -72,6 +89,9 @@ class InfiniteScrollInfo {
     changeId(id) {
         this.id = id;
     }
+    getId() {
+        return this.id;
+    }
 
     stopFetching() {
         this.isfetching = false;
@@ -80,13 +100,61 @@ class InfiniteScrollInfo {
     getIsFetching() {
         return this.isfetching;
     }
-
-    getId() {
-        return this.id;
+    getSectionId() {
+        return this.sectionId;
     }
-
+    getSectionObj() {
+        return this.sectionObj;
+    }
 }
 
+class InfiniteScrollManager {
+    constructor() {
+        this.sections = {};
+    }
+
+    addSection(sectionId) {
+        this.sections[sectionId] = new sectionInfiniteScrollInfo(sectionId);
+    }
+
+    getSection(sectionId) {
+        return this.sections[sectionId];
+    }
+    getSectionLength() {
+        return Object.keys(this.sections).length;
+    }
+
+    removeSection(sectionId) {
+        delete this.sections[sectionId];
+    }
+
+    stopFetching(sectionId) {
+        this.sections[sectionId].stopFetching();
+    }
+
+    incrementId(sectionId) {
+        this.sections[sectionId].incrementId();
+    }
+
+    changeId(sectionId, id) {
+        this.sections[sectionId].changeId(id);
+    }
+    getSectionId(sectionId) {
+        return this.sections[sectionId].getSectionId();
+    }
+    getIdBySection(sectionId) {
+        return this.sections[sectionId].getId();
+    }
+    getIsFetching(sectionId) {
+        return this.sections[sectionId].getIsFetching();
+    }
+    getSectionObj(sectionId) {
+        return this.sections[sectionId].getSectionObj();
+    }
+    getSectionObjs() {
+        return Object.values(this.sections).map((section) => section.getSectionObj());
+    }
+}
 const youtubeIframeInfo = {
     widthRatio: 16,
     heightRatio: 9,
@@ -106,10 +174,76 @@ const iconPathData = {
     ]
 }
 
-const infiniteScrollInfo = new InfiniteScrollInfo();
 const mousePointer = sectionInfo[1].obj.querySelector(".mouse-cursor");
 const modal = document.getElementById("myModal");
 let currentDivIndex = 0;
+
+let lastScrollTop = 0;
+
+// 비디오명 상수
+const VIDEONAME = "jabez_background_video_2";
+const MOBILEVIDEONAME = "jabez_background_video_2_fontSize";
+
+// id에 scroll-section이 포함된 section들 중에서 content관련 id가 들어간 section의 정보를 infiniteScrollInfo에 추가하고, section정보에 조회 시작 ID를 추가.
+const infiniteScrollManager = new InfiniteScrollManager();
+sectionInfo.forEach(async (section) => {
+    if (section.obj.getAttribute("data-contentSectionId")) {
+        const sectionId = section.obj.getAttribute("data-contentSectionId");
+        infiniteScrollManager.addSection(sectionId);
+        const json = await fetchData(`/api/content/get/SectionNum/${sectionId}`);
+        if (json.length === 0) {
+            infiniteScrollManager.changeId(sectionId, 0);
+            infiniteScrollManager.stopFetching(sectionId);
+        } else {
+            json.forEach((info) => {
+                createCard(info, section.obj.querySelector(".row"), info.ID);
+                infiniteScrollManager.changeId(sectionId, info.ID);
+            });
+        }
+    }
+});
+
+// 드롭다운 메뉴의 항목을 클릭하면 항목에 해당하는 section을 오픈하고, 나머지 section은 닫는다.
+const dropdownMenuItems = document.querySelector(".contentListNavigator").querySelectorAll(".list-group-item");
+dropdownMenuItems.forEach((item) => {
+    item.addEventListener("click", function (event) {
+        const sectionId = this.getAttribute("data-contentListId");
+        const contentSection = infiniteScrollManager.getSectionObj(sectionId);
+        window.scrollTo({ top: getTotalOffsetTop(contentSection), behavior: "smooth" }); // contentSection으로 이동
+        const selectedH2 = contentSection.querySelector("h2.content");
+        const contentSections = infiniteScrollManager.getSectionObjs();
+        const h2InContentSections = contentSections.map((section) => section.querySelector("h2.content"));
+
+        h2InContentSections.forEach((unselectedH2) => {
+            if (unselectedH2 == selectedH2) {
+                unselectedH2.classList.add("show");
+            } else if (unselectedH2.classList.contains("show")) {
+                unselectedH2.classList.remove("show");
+            }
+        });
+    });
+});
+function getTotalOffsetTop(element) {
+    let totalOffsetTop = 0;
+
+    while (element) {
+        totalOffsetTop += element.offsetTop;
+        element = element.offsetParent;
+    }
+
+    return totalOffsetTop;
+}
+
+// 아이콘을 클릭하면 section으로 이동
+const scrollDownIcons = document.querySelectorAll("svg[class*='scrollDown']");
+for (let i = 0; i < scrollDownIcons.length; i++) {
+    scrollDownIcons[i].addEventListener("click", function (event) {
+        const section = document.querySelector(`#scroll-section-${i + 2}`);
+        window.scrollTo({ top: getTotalOffsetTop(section), behavior: "smooth" });
+        console.log("to move section " + (i + 2));
+    });
+}
+
 
 window.addEventListener("click", function (event) {
     if (event.target == modal) {
@@ -122,28 +256,13 @@ window.addEventListener("click", function (event) {
     }
 })
 
-// 아이콘을 클릭하면 section으로 이동
-const scrollDownIcons = document.querySelectorAll(".scrollDown");
-for(let i = 0; i < scrollDownIcons.length; i++) {
-    scrollDownIcons[i].addEventListener("click", function (event) {
-        const section = document.querySelector(`#scroll-section-${i + 2}`);
-        window.scrollTo({ top: section.offsetTop, behavior: "smooth" });
-    });
-}   
-    
-// osnt scrollDownIcons = document.querySelectorAll(".scrollDown").forEach((element) => {
-//     element.addEventListener("click", function (event) {
-//         const section = document.querySelector(this.getAttribute("data-section"));
-//         window.scrollTo({ top: section.offsetTop, behavior: "smooth" });
-//     });
-// });
-
 window.addEventListener("DOMContentLoaded", function (event) {
     const video = sectionInfo[1].obj.querySelector("video");
-    video.querySelectorAll("source")[0].setAttribute("src", `./video/${isMobile ? "jabez_background_video_2_fontSize" : "jabez_background_video_2"}.webm`);
-    video.querySelectorAll("source")[1].setAttribute("src", `./video/${isMobile ? "jabez_background_video_2_fontSize" : "jabez_background_video_2"}.mp4`);
+    video.querySelectorAll("source")[0].setAttribute("src", `./video/${isMobile ? MOBILEVIDEONAME : VIDEONAME}.webm`);
+    video.querySelectorAll("source")[1].setAttribute("src", `./video/${isMobile ? MOBILEVIDEONAME : VIDEONAME}.mp4`);
     video.load();
 });
+
 modal.querySelector(".modal-content").addEventListener("click", function (event) {
     if (event.target == this) {
         if (modal.classList.contains("d-flex")) {
@@ -154,6 +273,7 @@ modal.querySelector(".modal-content").addEventListener("click", function (event)
         document.body.style.overflow = "auto";
     }
 });
+
 sectionInfo[1].obj.querySelector(".sticky-area").addEventListener("mousemove", function (event) {
     if (mousePointer.classList.contains("hover") != true) {
         mousePointer.classList.add("hover");
@@ -203,9 +323,11 @@ sectionInfo[1].obj.querySelector(".content-area").addEventListener("click", func
 
 
 sectionInfo[1].obj.querySelector(".volume-control").addEventListener("mouseover", function (event) {
+    console.log("mouseover in volume-control");
     mousePointer.style.opacity = "0";
 });
 sectionInfo[1].obj.querySelector(".volume-control").addEventListener("mouseleave", function (event) {
+    console.log("mouseleave in volume-control");
     mousePointer.style.opacity = "1";
 });
 sectionInfo[1].obj.querySelector(".volume-control").addEventListener("click", function (event) {
@@ -232,7 +354,34 @@ sectionInfo[1].obj.querySelector(".volume-control").addEventListener("click", fu
     }
 });
 
-let lastScrollTop = 0;
+sectionInfo.forEach(async (section) => {
+    if (section.obj.getAttribute("data-contentSectionId")) {
+        section.obj.querySelector("h2").addEventListener("click", function (event) {
+            this.classList.toggle("show");
+            const contentList = this.nextElementSibling;
+            if (this.classList.contains("show")) {
+                let delayAniamtion = 0;
+                contentList.querySelectorAll(".col").forEach((col) => {
+                    col.classList.remove("animation-fadeOut-up-bounce");
+                    col.classList.add("animation-fadeIn-down-bounce");
+                    col.style.animationDelay = `${delayAniamtion}s`;
+                    delayAniamtion += 0.1;
+                });
+            } else {
+                contentList.querySelectorAll(".col").forEach((col) => {
+                    col.classList.remove("animation-fadeIn-down-bounce");
+                    col.classList.add("animation-fadeOut-up-bounce");
+                });
+            }
+            // if (this.classList.contains("show")) {
+            //     contentList.style.height = contentList.scrollHeight + "px";
+            // } else if (this.classList.contains("show") != true) {
+            //     contentList.style.height = "0px";
+            // }
+        });
+    }
+});
+
 
 // resize 이벤트 발생 시 iframe의 크기를 조절
 function resizeIframe() {
@@ -244,13 +393,11 @@ function resizeIframe() {
     if (isMobile != true && (width > height)) {
         const iframeHeight = height * 0.8;
         const iframeWidth = (iframeHeight * youtubeIframeInfo.widthRatio) / youtubeIframeInfo.heightRatio;
-        iframe.style.width = iframeWidth + "px";
-        iframe.style.height = iframeHeight + "px";
+        applyStyle(iframe, { width: `${iframeWidth}px`, height: `${iframeHeight}px` });
     } else if (isMobile != true && (width < height)) {
         const iframeWidth = width * 0.8;
         const iframeHeight = (iframeWidth * youtubeIframeInfo.heightRatio) / youtubeIframeInfo.widthRatio;
-        iframe.style.width = iframeWidth + "px";
-        iframe.style.height = iframeHeight + "px";
+        applyStyle(iframe, { width: `${iframeWidth}px`, height: `${iframeHeight}px` });
     }
 
     // mobile에서 가로, 세로 모드 전환 시 iframe의 크기를 조절
@@ -258,15 +405,13 @@ function resizeIframe() {
     if (isMobile && window.matchMedia("(orientation: portrait)").matches) {
         const iframeWidth = width * 0.9;
         const iframeHeight = (iframeWidth * youtubeIframeInfo.heightRatio) / youtubeIframeInfo.widthRatio;
-        iframe.style.width = iframeWidth + "px";
-        iframe.style.height = iframeHeight + "px";
+        applyStyle(iframe, { width: `${iframeWidth}px`, height: `${iframeHeight}px` });
     }
     // 가로 모드일 때
     else if (isMobile && window.matchMedia("(orientation: landscape)").matches) {
         const iframeHeight = height * 0.8;
         const iframeWidth = (iframeHeight * youtubeIframeInfo.widthRatio) / youtubeIframeInfo.heightRatio;
-        iframe.style.width = iframeWidth + "px";
-        iframe.style.height = iframeHeight + "px";
+        applyStyle(iframe, { width: `${iframeWidth}px`, height: `${iframeHeight}px` });
     }
 }
 
@@ -278,27 +423,68 @@ function resizeVideo() {
 
     // 세로 모드일 때
     if (isMobile != true && (width > height)) {
-        if (video.classList.contains("object-fit-contain")) {
-            video.classList.remove("object-fit-contain");
-        }
-        video.classList.add("object-fit-cover");
+        handleClassList(video, "object-fit-cover", "object-fit-contain");
     }
     else if (isMobile != true && (width < height)) {
-        if (video.classList.contains("object-fit-cover")) {
-            video.classList.remove("object-fit-cover");
-        }
-        video.classList.add("object-fit-contain");
+        handleClassList(video, "object-fit-contain", "object-fit-cover");
     }
 
     // 세로 모드일 때
     if (isMobile && window.matchMedia("(orientation: portrait)").matches) {
-        video.classList.remove("object-fit-cover");
-        video.classList.add("object-fit-contain");
+        handleClassList(video, "object-fit-contain", "object-fit-cover");
     }
     // 가로 모드일 때
     else if (isMobile && window.matchMedia("(orientation: landscape)").matches) {
-        video.classList.remove("object-fit-contain");
-        video.classList.add("object-fit-cover");
+        handleClassList(video, "object-fit-cover", "object-fit-contain");
+    }
+}
+
+function applyStyle(element, style) {
+    Object.keys(style).forEach((key) => {
+        element.style[key] = style[key];
+    });
+}
+
+function applyStyleToElements(elements, style) {
+    elements.forEach((element) => {
+        applyStyle(element, style);
+    });
+}
+
+function resizeNavigator() {
+    const navigatorArea = document.querySelector(".contentListNavigator");
+    const naviListGroup = navigatorArea.querySelector(".contentListNavigator > .list-group");
+    const navigator = naviListGroup.querySelectorAll(".list-group-item");
+
+    // 데스크탑에서 브라우저의 가로 길이가 992px 이하일 때
+    if (isMobile != true && window.matchMedia("(max-width: 992px)").matches) {
+        applyStyle(navigatorArea, { bottom: "10%", right: "3%" });
+    } else if (isMobile != true && window.matchMedia("(min-width: 992px)").matches) {
+        applyStyle(navigatorArea, { bottom: "50%", right: "5%" });
+    }
+
+    // 모바일 세로 모드일 때
+    if (isMobile && window.matchMedia("(orientation: portrait)").matches) {
+        applyStyle(navigatorArea, { bottom: "10%", right: "3%" });
+        applyStyleToElements(navigator, {
+            backgroundColor: "rgba(0, 0, 0, 0)",
+            border: "1px solid white",
+            color: "white",
+            width: "100%",
+            padding: "0.2rem",
+            fontSize: "0.8rem"
+        });
+        // 모바일 가로 모드일 때
+    } else if (isMobile && window.matchMedia("(orientation: landscape)").matches) {
+        applyStyle(navigatorArea, { bottom: "17%", right: "2%" });
+        applyStyleToElements(navigator, {
+            backgroundColor: "rgba(0, 0, 0, 0)",
+            border: "1px solid white",
+            color: "white",
+            width: "100%",
+            padding: "0.2rem",
+            fontSize: "0.8rem"
+        });
     }
 }
 
@@ -306,7 +492,7 @@ function resizeVideo() {
 function resizeSection() {
     for (let i = 0; i < sectionInfo.length; i++) {
         if (sectionInfo[i].multipleValue > 0) {
-            sectionInfo[i].obj.style.height = `${sectionInfo[i].multipleValue * window.innerHeight}px`;
+            applyStyle(sectionInfo[i].obj, { height: `${sectionInfo[i].multipleValue * window.innerHeight}px` })
         }
     }
 }
@@ -320,23 +506,23 @@ function resizeMessage() {
 
     // 세로 모드일 때
     if (isMobile && window.matchMedia("(orientation: portrait)").matches) {
-        message1.style.transform = "translate(0, 0)";
-        message2.style.transform = "translate(0, 0)";
+        applyStyleToElements([message1, message2], { transform: "translate(0, 0)" });
     }
     // 가로 모드일 때
     else if (isMobile && window.matchMedia("(orientation: landscape)").matches) {
-        message1.style.transform = "translate(0, 10rem)";
-        message2.style.transform = "translate(0, 10rem)";
+        applyStyleToElements([message1, message2], { transform: "translate(0, 10rem)" });
     }
 }
 
 resizeSection();
 resizeVideo();
+resizeNavigator();
 window.addEventListener("resize", () => {
     resizeSection();
     resizeIframe();
     resizeVideo();
     resizeMessage();
+    resizeNavigator();
 });
 
 function createElement(tagName, attributes, children) {
@@ -362,9 +548,12 @@ function createElement(tagName, attributes, children) {
     return element;
 }
 
-async function fetchData(id) {
+async function fetchData(api) {
+    if (api == null) {
+        return [];
+    }
     try {
-        const response = await fetch(`/api/memberData/${id}`);
+        const response = await fetch(api);
         const json = await response.json();
         return json;
     } catch (error) {
@@ -386,7 +575,7 @@ function createCard(info, rowTag, id) {
         id: `${_id}`
     });
 
-    const cardTag = createElement('div', { classList: ['card', 'shadow-sm', 'mb-3'], 'data-src': youtubeLink});
+    const cardTag = createElement('div', { classList: ['card', 'shadow-sm', 'mb-3'], 'data-src': youtubeLink });
     const cardImageTag = createElement('img', { src: memberYoutubeThumnailPath, classList: ['card-img-top'], style: { width: '100%', height: '14.5rem' } });
     const cardBodyTag = createElement('div', { classList: ['card-body'] });
 
@@ -424,39 +613,78 @@ function createCard(info, rowTag, id) {
     rowTag.appendChild(colTag);
 }
 
-async function loadAndCreateCards(id, rowTag) {
-    const json = await fetchData(id);
-
-    // 데이터가 빈 배열이면 더이상 데이터를 가져오지 않는다.
-    if (json.length === 0) {
-        infiniteScrollInfo.stopFetching();
-        return;
+async function fetchDataForSection(infiniteScrollManager, sectionId, count) {
+    const data = [];
+    for (let i = 0; i < count; i++) {
+        try {
+            const queryCount = 1;
+            const json = await fetchData(`/api/content/get/${infiniteScrollManager.getIdBySection(sectionId)}/${queryCount}`);
+            if (json.length === 0) {
+                infiniteScrollManager.stopFetching(sectionId);
+                break;
+            } else {
+                infiniteScrollManager.changeId(sectionId, json[json.length - 1].ID);
+                data.push(json);
+            }
+        } catch (error) {
+            break;
+        }
     }
-
-    json.forEach((info) => {
-        createCard(info, rowTag, id);
-    });
+    return data;
 }
 
 // 페이지 처음 로딩 시 이미지를 불러오기 위해 사용
-async function preloadImages() {
+async function preloadImages(infiniteScrollManager) {
     // id변수를 활용해서 /api/centerData/로 데이터를 ajax 요청한다.
-    if (infiniteScrollInfo.getIsFetching() == true) {
-        const row = document.querySelector("#scroll-section-4").querySelector(".row");
-        // id변수를 활용해서 /data로 데이터를 ajax 요청한다.
-        for (let i = 0; i < 6; i++) {
-            if (infiniteScrollInfo.getIsFetching() == false) {
-                break;
-            }
-            await loadAndCreateCards(infiniteScrollInfo.getId(), row);
-            infiniteScrollInfo.changeId(document.querySelector(".col:last-child").getAttribute("id"));
+    const sections = [1, 2, 3, 4];
+    const dataPerSection = 5;
+    const allData = [];
+
+
+    for (const sectionId of sections) {
+        const data = await fetchDataForSection(infiniteScrollManager, sectionId, dataPerSection);
+        allData.push(...data);
+    }
+
+    allData.forEach((data) => {
+        let row = infiniteScrollManager.getSectionObj(data[0].ContentSectionNum).querySelector(".row");
+        data.forEach((info) => {
+            createCard(info, row, info.ID);
+        });
+    });
+
+    for (const sectionId of sections) {
+        if (infiniteScrollManager.getIsFetching(sectionId) == true) {
+            const sectionObj = infiniteScrollManager.getSectionObj(sectionId);
+            const contentListArea = sectionObj.querySelector(".content-list");
+            const btn_more = createElement("button", { classList: ["btn", "btn-outline-dark", "btn-more"], id: `btn-more-${sectionId}` }, ["더보기"]);
+            btn_more.addEventListener("click", async function (event) {
+                const data = await fetchDataForSection(infiniteScrollManager, sectionId, 3)
+                if (data.length === 0) {
+                    this.remove();
+                    return;
+                }
+                data.forEach((json) => {
+                    json.forEach((info) => {
+                        let row = infiniteScrollManager.getSectionObj(info.ContentSectionNum).querySelector(".row");
+                        createCard(info, row, info.ID);
+                    });
+                });
+                this.style.display = "none";
+                const infiniteScrollTrigger = createElement("div", { classList: ["w-100"], id: `infinite-scroll-trigger-${sectionId}` });
+                contentListArea.appendChild(infiniteScrollTrigger);
+                if (intersectionObserverUnlimitedScroll != null) {
+                    intersectionObserverUnlimitedScroll.observe(infiniteScrollTrigger);
+                }
+            });
+            contentListArea.appendChild(btn_more);
         }
     }
 }
 
 history.scrollRestoration = "manual"; // 뒤로가기 시 스크롤 위치를 유지하지 않음
 window.addEventListener("load", (e) => {
-    preloadImages()
+    preloadImages(infiniteScrollManager);
 })
 
 function calculateValue(animationValues, scrollInSection, activedSectionHeight) {
@@ -505,18 +733,14 @@ function playAnimation(activeSectionIndex, previousHeight) {
                 const message2_fadeOut_transition_value = calculateValue(sectionValues.message2_fadeOut_transform, scrollInSection, activeSectionHeight);
 
                 if (scrollRateInSection <= 0.16) {
-                    contentList[0].style.opacity = message1_fadeIn_opacity_value;
-                    contentList[0].style.transform = `translate(0,${message1_fadeIn_transition_value}%)`;
+                    applyStyle(contentList[0], { opacity: message1_fadeIn_opacity_value, transform: `translate(0,${message1_fadeIn_transition_value}%)` });
                 } else {
-                    contentList[0].style.opacity = message1_fadeOut_opacity_value;
-                    contentList[0].style.transform = `translate(0,${message1_fadeOut_transition_value}%)`;
+                    applyStyle(contentList[0], { opacity: message1_fadeOut_opacity_value, transform: `translate(0,${message1_fadeOut_transition_value}%)` });
                 }
                 if (scrollRateInSection <= 0.50) {
-                    contentList[1].style.opacity = message2_fadeIn_opacity_value;
-                    contentList[1].style.transform = `translate(0,${message2_fadeIn_transition_value}%)`;
+                    applyStyle(contentList[1], { opacity: message2_fadeIn_opacity_value, transform: `translate(0,${message2_fadeIn_transition_value}%)` });
                 } else {
-                    contentList[1].style.opacity = message2_fadeOut_opacity_value;
-                    contentList[1].style.transform = `translate(0,${message2_fadeOut_transition_value}%)`;
+                    applyStyle(contentList[1], { opacity: message2_fadeOut_opacity_value, transform: `translate(0,${message2_fadeOut_transition_value}%)` });
                 }
                 break;
             }
@@ -524,20 +748,13 @@ function playAnimation(activeSectionIndex, previousHeight) {
 }
 
 function handleClassList(message, addClass, removeClass) {
-    if (message.classList.contains(removeClass)) {
-        message.classList.remove(removeClass);
-    }
-    if (message.classList.contains(addClass) != true) {
-        message.classList.add(addClass);
-    }
+    message.classList.remove(removeClass);
+    message.classList.add(addClass);
+
 }
 function handleAnimation(message, addAnimation, removeAnimation) {
-    if (message.classList.contains(removeAnimation)) {
-        message.classList.remove(removeAnimation);
-    }
-    if (message.classList.contains(addAnimation) != true) {
-        message.classList.add(addAnimation);
-    }
+    message.classList.remove(removeAnimation);
+    message.classList.add(addAnimation);
 }
 
 function playMobileAnimation(activeSectionIndex, previousHeight, direction) {
@@ -650,7 +867,6 @@ function playMobileAnimation(activeSectionIndex, previousHeight, direction) {
                 break;
             }
     }
-
 }
 
 function findActiveSection() {
@@ -725,40 +941,32 @@ const intersectionObserverSection3 = new IntersectionObserver((entries, observer
 
 intersectionObserverSection3.observe(document.querySelector("#scroll-section-3"));
 
+function changeSvgIcon(element, iconPath) {
+    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    path.setAttribute("d", iconPath);
+    element.replaceChildren(path);
+}
+function changeMultipleSvgIcons(elements, iconPaths) {
+    elements.forEach((element, index) => {
+        changeSvgIcon(element, iconPaths[index]);
+    });
+}
 
 const intersectionObserverSection2 = new IntersectionObserver((entries, observer) => {
     const [entry] = entries;
     const video = entry.target.querySelector("video");
     const volumeControl = sectionInfo[1].obj.querySelector(".volume-control");
 
-    // scroll-section-2가 닿으면 재생하고, 닿지 않으면 video를 멈추고, 음소거한다.
+    // scroll-section-2가 닿으면 음소거인 상태로 재생하고, 닿지 않으면 video를 멈추고, 음소거한다.
     if (entry.isIntersecting) {
-        if (video.paused && video.muted) {
-            video.play();
-            // 아이콘의 path를 바꾼다.
-            const path1 = document.createElementNS("http://www.w3.org/2000/svg", "path");
-            path1.setAttribute("d", iconPathData.pauseIcon);
-            const path2 = document.createElementNS("http://www.w3.org/2000/svg", "path");
-            path2.setAttribute("d", iconPathData.muteIcon);
-            mousePointer.replaceChildren(path1);
-            volumeControl.replaceChildren(path2);
-        }
+        video.play();
+        video.muted = true;
+        changeMultipleSvgIcons([mousePointer, volumeControl], [iconPathData.pauseIcon, iconPathData.muteIcon]);
     }
     else if (entry.isIntersecting == false) {
-        if (video.paused && video.muted) {
-            return;
-        }
         video.pause();
         video.muted = true;
-
-        // 아이콘의 path를 바꾼다.
-        const path1 = document.createElementNS("http://www.w3.org/2000/svg", "path");
-        path1.setAttribute("d", iconPathData.playIcon);
-        const path2 = document.createElementNS("http://www.w3.org/2000/svg", "path");
-        path2.setAttribute("d", iconPathData.muteIcon);
-
-        mousePointer.replaceChildren(path1);
-        volumeControl.replaceChildren(path2);
+        changeMultipleSvgIcons([mousePointer, volumeControl], [iconPathData.playIcon, iconPathData.muteIcon]);
     }
 }, { threshold: 0 })
 
@@ -766,59 +974,54 @@ intersectionObserverSection2.observe(document.querySelector("#scroll-section-2")
 
 
 
-const intersectionObserverSection4 = new IntersectionObserver((entries, observer) => {
+const intersectionObserverContentSection = new IntersectionObserver((entries, observer) => {
     const [entry] = entries;
-    if (entry.isIntersecting) {
-        const contentArea = entry.target.querySelector(".content-area");
-        const sectionTitle = contentArea.querySelector("h2");
-        const rows = contentArea.querySelectorAll(".row");
-        let animationDelayTime = 0;
-        handleAnimation(sectionTitle, "animation-fadeIn-noMove", "animation-fadeOut-noMove");
-        rows.forEach((row) => {
-            const cols = row.querySelectorAll(".col-md-4")
-            cols.forEach((col) => {
-                if (col.classList.contains("animation-fadeOut-down-bounce")) {
-                    col.classList.remove("animation-fadeOut-down-bounce");
-                }
-                if (col.classList.contains("animation-fadeIn-down-bounce") != true) {
-                    col.classList.add("animation-fadeIn-down-bounce");
-                    col.style.animationDelay = `${animationDelayTime}s`;
-                    animationDelayTime += 0.1;
-                }
-            })
-        })
-    }
-    else if (entry.isIntersecting == false) {
-        const contentArea = entry.target.querySelector(".content-area");
-        const sectionTitle = contentArea.querySelector("h2");
-        const rows = contentArea.querySelectorAll(".row");
+    const contentSections = entry.target.querySelectorAll("section[id*=scroll-section]");
 
-        handleAnimation(sectionTitle, "animation-fadeOut-noMove", "animation-fadeIn-noMove");
-        rows.forEach((row) => {
-            const cols = row.querySelectorAll(".col-md-4")
-            cols.forEach((col) => {
-                handleAnimation(col, "animation-fadeOut-down-bounce", "animation-fadeIn-down-bounce");
-            })
-        })
-    }
-})
+    const handleSectionAnimation = (section, animationIn, animationOut) => {
+        const sectionTitle = section.querySelector(".content-area h2");
+        handleAnimation(sectionTitle, animationIn, animationOut);
+    };
 
-intersectionObserverSection4.observe(document.querySelector("#scroll-section-4"));
+    contentSections.forEach((section) => {
+        if (entry.isIntersecting) {
+            handleSectionAnimation(section, "animation-fadeIn-noMove", "animation-fadeOut-noMove");
+        } else {
+            handleSectionAnimation(section, "animation-fadeOut-noMove", "animation-fadeIn-noMove");
+        }
+    });
+});
+intersectionObserverContentSection.observe(document.querySelector(".content-sections"));
+
+
 
 const intersectionObserverUnlimitedScroll = new IntersectionObserver(async (entries, observer) => {
     const [entry] = entries;
-    if (entry.isIntersecting && (infiniteScrollInfo.getIsFetching() == true)){
-        const row = document.querySelector("#scroll-section-4").querySelector(".row");
+    if (entry.isIntersecting && entry.intersectionRatio > 0.5) {
+        const sectionInfoItem = sectionInfo.find(item => item.obj.querySelector("div[id*=infinite-scroll-trigger]") == entry.target);
+        if (!sectionInfoItem) return;
 
-        // id변수를 활용해서 /data로 데이터를 ajax 요청한다.
-        for (let i = 0; i < 3; i++) {
-            if (infiniteScrollInfo.getIsFetching() == false) {
-                break;
-            }
-            await loadAndCreateCards(infiniteScrollInfo.getId(), row);
-            infiniteScrollInfo.changeId(document.querySelector(".col:last-child").getAttribute("id"));
+        const sectionId = sectionInfoItem.obj.getAttribute("data-contentSectionId");
+        const section = infiniteScrollManager.getSectionObj(sectionId);
+        const isFetching = infiniteScrollManager.getIsFetching(sectionId);
+
+        if (!isFetching) {
+            observer.unobserve(entry.target);
+            return;
         }
-    }
-}, { threshold: 1.0 })
 
-intersectionObserverUnlimitedScroll.observe(document.querySelector("footer"));
+        const data = await fetchDataForSection(infiniteScrollManager, sectionId, 3);
+        if (!data.length) {
+            infiniteScrollManager.stopFetching(sectionId);
+            observer.unobserve(entry.target);
+            return;
+        }
+
+        data.forEach((json) => {
+            json.forEach((info) => {
+                const row = section.querySelector(".row");
+                createCard(info, row, info.ID);
+            });
+        });
+    }
+}, { threshold: 1.0 });

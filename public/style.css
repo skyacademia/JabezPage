@@ -90,11 +90,43 @@ nav {
     opacity: 0;
 } */
 
-#scroll-section-4 .content-area h2 {
-    opacity: 0;
+/* content section 관련 style */
+
+section[id*=scroll-section][data-contentSectionId] .content-list {
     transition: all 1.0s;
 }
 
+section[id*=scroll-section][data-contentSectionId] .content-area h2 {
+    opacity: 0;
+    transition: all 1.0s;
+    cursor: pointer;
+}
+
+/* row안에 있는 컨텐츠 안보이게 하기 */
+section[id*=scroll-section][data-contentSectionId] .content-area h2 + .content-list {
+    height: 0px;
+    overflow: hidden;
+}
+section[id*=scroll-section][data-contentSectionId] .content-area h2.show + .content-list {
+    /* animation: slide-down 1s forwards; */
+    height: auto;
+    overflow: visible;
+}
+
+/* h2가 show 클래스가 추가되면 row 안에 있는 컨텐츠 보이게 하기*/
+section[id*=scroll-section][data-contentSectionId] .content-area h2 svg {
+    top: 50%;
+    left : 98%;
+    transform: translate(-50%,-50%);
+    transition: all 0.5s;
+}
+
+section[id*=scroll-section][data-contentSectionId] .content-area h2.show svg {
+    transform:  translate(-50%,-50%) rotate(-180deg);
+
+}
+
+/* scroll-section-2 마우스 관련 style*/
 .mouse-cursor{
     position: absolute;
     top: 0;
@@ -126,6 +158,8 @@ nav {
     display: block;
 }
 
+
+/* 모달 관련 style */
 .modal {
     overflow: auto;
     background-color: rgba(0, 0, 0, 0.6);
@@ -138,6 +172,8 @@ nav {
     border: none;
 }
 
+
+/* 카드 hover했을 때 카드 전체가 hover 되기 위해 아래와 같은 설정 필요 */
 .card {
     transition: all 0.5s;
     cursor: pointer;
@@ -171,6 +207,29 @@ nav {
     transition: all 0.5s;
     animation: moveUpDown 2s infinite alternate;
     animation-timing-function: ease-in-out;
+}
+
+.scrollDown-section-2{
+    position: absolute;
+    bottom: 2rem;
+    left: 45%;
+    transform: translateX(-50%);
+    z-index: 20;
+    cursor: pointer;
+    fill: white;
+    transition: all 0.5s;
+    animation: moveUpDown 2s infinite alternate;
+    animation-timing-function: ease-in-out;
+}
+.contentListNavigator{
+    position: fixed;
+    bottom: 50%;
+    right: 5%;
+    transform: translateY(50%);
+    z-index: 1000;
+}
+.contentListNavigator .list-group-item-action{
+    width: 7rem;
 }
 
 @keyframes fadeInRight {

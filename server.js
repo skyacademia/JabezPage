@@ -201,6 +201,37 @@ app.get('/admin/manageAccount', (req, res) => {
   }
 });
 
+// api/content/get/:contentSectionNum 요청이 들어오면 db에서 contentSectionNum에 해당하는 데이터를 조회한 뒤 첫번째 데이터를 전송
+app.get('/api/content/get/SectionNum/:id', (req, res) => {
+  const contentSectionNum = req.params.id;
+  let db = new sqlite3.Database('./database/Jabez_database.db', sqlite3.OPEN_READONLY, (err) => {
+    if (err) {
+      console.error(err.message);
+    } else {
+      console.log('Connected to the database.');
+    }
+  });
+  // 데이터베이스에서 데이터를 가져옴
+  db.all(`SELECT * FROM Member_Information_tbl WHERE ContentSectionNum = ? ORDER BY ID LIMIT 1`, contentSectionNum, (err, rows) => {
+    if (err) {
+      console.error(err.message);
+    } else {
+      console.log('rows : ', rows);
+      console.log('Query successfully executed.');
+
+      res.send(rows);
+    }
+  });
+  // 데이터베이스 연결 종료
+  db.close((err) => {
+    if (err) {
+      console.error(err.message);
+    } else {
+      console.log('Close the database connection.');
+    }
+  });
+});
+
 
 // api/content/get/:id 요청이 들어오면 db에서 id부터 시작해서 최대 8개의 데이터를 가져와서 전송
 app.get('/api/content/get/:id', (req, res) => {
@@ -233,8 +264,9 @@ app.get('/api/content/get/:id', (req, res) => {
 
 
 // client가 '/api/memberData/:id'로 접속하면 sqplite3로 연결한 뒤 데이터베이스에서 데이터를 가져와서 전송
-app.get('/api/memberData/:id', (req, res) => {
+app.get('/api/content/get/:id/:count', (req, res) => {
   const id = req.params.id;
+  const count = req.params.count;
   let db = new sqlite3.Database('./database/Jabez_database.db', sqlite3.OPEN_READONLY, (err) => {
     if (err) {
       console.error(err.message);
@@ -243,7 +275,8 @@ app.get('/api/memberData/:id', (req, res) => {
     }
   });
   // 데이터베이스에서 데이터를 가져옴
-  db.all(`SELECT * FROM Member_Information_tbl WHERE ROWID > ? ORDER BY ROWID LIMIT 1`, id, (err, rows) => {
+  db.all(`SELECT * FROM Member_Information_tbl WHERE ROWID > ? 
+  AND ContentSectionNum = (SELECT ContentSectionNum FROM Member_Information_tbl WHERE ID = ?) ORDER BY ROWID LIMIT ?;`, [id,id,count], (err, rows) => {
     if (err) {
       console.error(err.message);
     } else {
