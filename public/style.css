@@ -104,7 +104,6 @@ section[id*=scroll-section][data-contentSectionId] .content-area h2 {
 
 /* row안에 있는 컨텐츠 안보이게 하기 */
 section[id*=scroll-section][data-contentSectionId] .content-area h2 + .content-list {
-    height: 0px;
     overflow: hidden;
 }
 section[id*=scroll-section][data-contentSectionId] .content-area h2.show + .content-list {
@@ -212,7 +211,7 @@ section[id*=scroll-section][data-contentSectionId] .content-area h2.show svg {
 .scrollDown-section-2{
     position: absolute;
     bottom: 2rem;
-    left: 45%;
+    left: 50%;
     transform: translateX(-50%);
     z-index: 20;
     cursor: pointer;
@@ -221,6 +220,8 @@ section[id*=scroll-section][data-contentSectionId] .content-area h2.show svg {
     animation: moveUpDown 2s infinite alternate;
     animation-timing-function: ease-in-out;
 }
+
+/* 컨텐츠 section 네비게이터 style */
 .contentListNavigator{
     position: fixed;
     bottom: 50%;
@@ -230,6 +231,24 @@ section[id*=scroll-section][data-contentSectionId] .content-area h2.show svg {
 }
 .contentListNavigator .list-group-item-action{
     width: 7rem;
+    background-color: rgba(0, 0, 0, 0);
+    border: 1px solid white;
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.5s, border 0.5s, color 0.5s;
+}
+.contentListNavigator .list-group-item-action:hover{
+
+    background-color: rgba(211, 211, 211, 1);
+    border: 1px solid rgba(211, 211, 211, 1);
+    color: black;
+    cursor: pointer;
+}
+/* 네이게이터 전용 : 클릭 시 실행*/
+.contentListNavigator .list-group-item-action.active{
+    background-color: rgba(211, 211, 211, 1);
+    border: 1px solid rgba(211, 211, 211, 1);
+    color: black;
 }
 
 @keyframes fadeInRight {

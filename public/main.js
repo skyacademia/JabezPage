@@ -203,26 +203,18 @@ sectionInfo.forEach(async (section) => {
     }
 });
 
-// 드롭다운 메뉴의 항목을 클릭하면 항목에 해당하는 section을 오픈하고, 나머지 section은 닫는다.
-const dropdownMenuItems = document.querySelector(".contentListNavigator").querySelectorAll(".list-group-item");
-dropdownMenuItems.forEach((item) => {
-    item.addEventListener("click", function (event) {
-        const sectionId = this.getAttribute("data-contentListId");
-        const contentSection = infiniteScrollManager.getSectionObj(sectionId);
-        window.scrollTo({ top: getTotalOffsetTop(contentSection), behavior: "smooth" }); // contentSection으로 이동
-        const selectedH2 = contentSection.querySelector("h2.content");
-        const contentSections = infiniteScrollManager.getSectionObjs();
-        const h2InContentSections = contentSections.map((section) => section.querySelector("h2.content"));
 
-        h2InContentSections.forEach((unselectedH2) => {
-            if (unselectedH2 == selectedH2) {
-                unselectedH2.classList.add("show");
-            } else if (unselectedH2.classList.contains("show")) {
-                unselectedH2.classList.remove("show");
-            }
-        });
-    });
-});
+function getTotalOffsetTop(element) {
+    let totalOffsetTop = 0;
+
+    while (element) {
+        totalOffsetTop += element.offsetTop;
+        element = element.offsetParent;
+    }
+
+    return totalOffsetTop;
+}
+
 function getTotalOffsetTop(element) {
     let totalOffsetTop = 0;
 
@@ -354,33 +346,75 @@ sectionInfo[1].obj.querySelector(".volume-control").addEventListener("click", fu
     }
 });
 
-sectionInfo.forEach(async (section) => {
-    if (section.obj.getAttribute("data-contentSectionId")) {
-        section.obj.querySelector("h2").addEventListener("click", function (event) {
-            this.classList.toggle("show");
-            const contentList = this.nextElementSibling;
-            if (this.classList.contains("show")) {
-                let delayAniamtion = 0;
-                contentList.querySelectorAll(".col").forEach((col) => {
-                    col.classList.remove("animation-fadeOut-up-bounce");
-                    col.classList.add("animation-fadeIn-down-bounce");
-                    col.style.animationDelay = `${delayAniamtion}s`;
-                    delayAniamtion += 0.1;
-                });
-            } else {
-                contentList.querySelectorAll(".col").forEach((col) => {
-                    col.classList.remove("animation-fadeIn-down-bounce");
-                    col.classList.add("animation-fadeOut-up-bounce");
-                });
-            }
-            // if (this.classList.contains("show")) {
-            //     contentList.style.height = contentList.scrollHeight + "px";
-            // } else if (this.classList.contains("show") != true) {
-            //     contentList.style.height = "0px";
-            // }
-        });
+const contentListNavigator = document.querySelector(".contentListNavigator");
+
+sectionInfo.forEach((section) => {
+    const contentListId = section.obj.getAttribute("data-contentSectionId");
+    if (contentListId) {
+        const h2 = section.obj.querySelector("h2");
+
+        h2.addEventListener("click", toggleContent);
+
+        const relatedNavItem = contentListNavigator.querySelector(`[data-contentListId="${contentListId}"]`);
+        if (relatedNavItem) {
+            relatedNavItem.addEventListener("click", navigateToSection);
+        }
     }
 });
+
+function toggleContent(event) {
+    const h2 = this;
+    h2.classList.toggle("show");
+
+    const contentList = h2.nextElementSibling;
+    const isContentVisible = h2.classList.contains("show");
+
+    animateContentList(contentList, isContentVisible);
+
+    const contentListId = h2.closest("[data-contentSectionId]").getAttribute("data-contentSectionId");
+    updateNavigationActiveState(contentListId, isContentVisible);
+}
+
+function animateContentList(contentList, isVisible) {
+    let count = 0;
+    contentList.style.height = isVisible ? "auto" : contentList.querySelector(".col").offsetHeight + "px";
+
+    contentList.querySelectorAll(".col").forEach((col) => {
+        if (count >= 3) {
+            const animationClass = isVisible ? "animation-fadeIn-down-bounce" : "animation-fadeOut-up-bounce";
+            col.classList.remove(isVisible ? "animation-fadeOut-up-bounce" : "animation-fadeIn-down-bounce");
+            col.classList.add(animationClass);
+        }
+        count++;
+    });
+}
+
+function updateNavigationActiveState(contentListId, isActive) {
+    contentListNavigator.querySelectorAll(".list-group-item").forEach((item) => {
+        if (item.getAttribute("data-contentListId") === contentListId) {
+            isActive ? item.classList.add("active") : item.classList.remove("active");
+        }
+    });
+}
+
+function navigateToSection(event) {
+    const contentListId = this.getAttribute("data-contentListId");
+    const contentSection = infiniteScrollManager.getSectionObj(contentListId);
+    window.scrollTo({ top: getTotalOffsetTop(contentSection), behavior: "smooth" });
+
+    const selectedH2 = contentSection.querySelector("h2.content");
+    const contentSections = infiniteScrollManager.getSectionObjs();
+    const h2InContentSections = contentSections.map((section) => section.querySelector("h2.content"));
+
+    h2InContentSections.forEach((unselectedH2) => {
+        if (unselectedH2 == selectedH2 || unselectedH2.classList.contains("show")) {
+            unselectedH2.click();
+        }
+    });
+}
+
+
+
 
 
 // resize 이벤트 발생 시 iframe의 크기를 조절
@@ -467,9 +501,6 @@ function resizeNavigator() {
     if (isMobile && window.matchMedia("(orientation: portrait)").matches) {
         applyStyle(navigatorArea, { bottom: "10%", right: "3%" });
         applyStyleToElements(navigator, {
-            backgroundColor: "rgba(0, 0, 0, 0)",
-            border: "1px solid white",
-            color: "white",
             width: "100%",
             padding: "0.2rem",
             fontSize: "0.8rem"
@@ -478,9 +509,6 @@ function resizeNavigator() {
     } else if (isMobile && window.matchMedia("(orientation: landscape)").matches) {
         applyStyle(navigatorArea, { bottom: "17%", right: "2%" });
         applyStyleToElements(navigator, {
-            backgroundColor: "rgba(0, 0, 0, 0)",
-            border: "1px solid white",
-            color: "white",
             width: "100%",
             padding: "0.2rem",
             fontSize: "0.8rem"
@@ -655,36 +683,75 @@ async function preloadImages(infiniteScrollManager) {
 
     for (const sectionId of sections) {
         if (infiniteScrollManager.getIsFetching(sectionId) == true) {
-            const sectionObj = infiniteScrollManager.getSectionObj(sectionId);
-            const contentListArea = sectionObj.querySelector(".content-list");
-            const btn_more = createElement("button", { classList: ["btn", "btn-outline-dark", "btn-more"], id: `btn-more-${sectionId}` }, ["더보기"]);
-            btn_more.addEventListener("click", async function (event) {
-                const data = await fetchDataForSection(infiniteScrollManager, sectionId, 3)
-                if (data.length === 0) {
-                    this.remove();
-                    return;
-                }
-                data.forEach((json) => {
-                    json.forEach((info) => {
-                        let row = infiniteScrollManager.getSectionObj(info.ContentSectionNum).querySelector(".row");
-                        createCard(info, row, info.ID);
-                    });
-                });
-                this.style.display = "none";
-                const infiniteScrollTrigger = createElement("div", { classList: ["w-100"], id: `infinite-scroll-trigger-${sectionId}` });
-                contentListArea.appendChild(infiniteScrollTrigger);
-                if (intersectionObserverUnlimitedScroll != null) {
-                    intersectionObserverUnlimitedScroll.observe(infiniteScrollTrigger);
-                }
-            });
-            contentListArea.appendChild(btn_more);
+            addMoreButton(sectionId, infiniteScrollManager, intersectionObserverUnlimitedScroll);
+        }else{
+            addCloseButton(sectionId, infiniteScrollManager);
         }
     }
+}
+
+function addMoreButton(sectionId, infiniteScrollManager, intersectionObserverUnlimitedScroll) {
+    const sectionObj = infiniteScrollManager.getSectionObj(sectionId);
+    const contentListArea = sectionObj.querySelector(".content-list");
+    const btn_more = createElement("button", { classList: ["btn", "btn-outline-dark", "btn-more"], id: `btn-more-${sectionId}` }, ["더보기"]);
+
+    btn_more.addEventListener("click", async function (event) {
+        const data = await fetchDataForSection(infiniteScrollManager, sectionId, 3)
+        if (data.length === 0) {
+            this.remove();
+            addCloseButton(sectionId, infiniteScrollManager);
+            return;
+        }
+        data.forEach((json) => {
+            json.forEach((info) => {
+                let row = infiniteScrollManager.getSectionObj(info.ContentSectionNum).querySelector(".row");
+                createCard(info, row, info.ID);
+            });
+        });
+        this.style.display = "none";
+        const infiniteScrollTrigger = createElement("div", { classList: ["w-100"], id: `infinite-scroll-trigger-${sectionId}` });
+        contentListArea.appendChild(infiniteScrollTrigger);
+        if (intersectionObserverUnlimitedScroll != null) {
+            intersectionObserverUnlimitedScroll.observe(infiniteScrollTrigger);
+        }
+    });
+
+    contentListArea.appendChild(btn_more);
+}
+
+function addCloseButton(sectionId, infiniteScrollManager) {
+    const sectionObj = infiniteScrollManager.getSectionObj(sectionId);
+    const contentListArea = sectionObj.querySelector(".content-list");
+    const btnClose = createElement("button", { classList: ["btn", "btn-outline-dark"], id: `btn-close-${sectionId}` }, ["닫기"]);
+
+    btnClose.addEventListener("click", function (event) {
+        const h2Headline = sectionObj.querySelector("h2.content"); 
+        const navigator = document.querySelector(".contentListNavigator").querySelectorAll(".list-group-item");
+        navigator.forEach((item) => {
+            if(item.getAttribute("data-contentListId") == sectionId) {
+                item.classList.remove("active");
+            }
+        });
+        h2Headline.click();
+    });
+
+    contentListArea.appendChild(btnClose);
+}
+
+function settingContentSectionHeight(){
+    const contentSections = document.querySelectorAll("section[id*=scroll-section][data-contentSectionId]");
+    contentSections.forEach((section) => {
+        const contentListArea = section.querySelector(".content-list");
+        const contentList = contentListArea.querySelectorAll(".col");
+        const contentListHeight = contentList[0].clientHeight;
+        contentListArea.style.height = `${contentListHeight}px`;
+    });
 }
 
 history.scrollRestoration = "manual"; // 뒤로가기 시 스크롤 위치를 유지하지 않음
 window.addEventListener("load", (e) => {
     preloadImages(infiniteScrollManager);
+    settingContentSectionHeight();
 })
 
 function calculateValue(animationValues, scrollInSection, activedSectionHeight) {
@@ -1011,9 +1078,21 @@ const intersectionObserverUnlimitedScroll = new IntersectionObserver(async (entr
         }
 
         const data = await fetchDataForSection(infiniteScrollManager, sectionId, 3);
+        // 데이터가 없으면 더이상 데이터를 불러오지 못하므로 section을 닫는 닫기 버튼을 생성한다.
         if (!data.length) {
-            infiniteScrollManager.stopFetching(sectionId);
             observer.unobserve(entry.target);
+            const btnClose = createElement("button", { classList: ["btn", "btn-outline-dark"], id: `btn-close-${sectionId}` }, ["닫기"]);
+            btnClose.addEventListener("click", function (event) {
+                const h2Headline = section.querySelector("h2.content"); 
+                const navigator = document.querySelector(".contentListNavigator").querySelectorAll(".list-group-item");
+                navigator.forEach((item) => {
+                    if(item.getAttribute("data-contentListId") == sectionId) {
+                        item.classList.remove("active");
+                    }
+                });
+                h2Headline.click();
+            });
+            section.querySelector(".content-list").appendChild(btnClose);
             return;
         }
 
@@ -1023,5 +1102,21 @@ const intersectionObserverUnlimitedScroll = new IntersectionObserver(async (entr
                 createCard(info, row, info.ID);
             });
         });
+        // 3개의 데이터를 불러오지 못하면 DB에 더이상 데이터가 없다고 판단하고 닫기 버튼을 생성한다.
+        if(data.length < 3) {
+            observer.unobserve(entry.target);
+            const btnClose = createElement("button", { classList: ["btn", "btn-outline-dark"], id: `btn-close-${sectionId}` }, ["닫기"]);
+            btnClose.addEventListener("click", function (event) {
+                const h2Headline = section.querySelector("h2.content"); 
+                const navigator = document.querySelector(".contentListNavigator").querySelectorAll(".list-group-item");
+                navigator.forEach((item) => {
+                    if(item.getAttribute("data-contentListId") == sectionId) {
+                        item.classList.remove("active");
+                    }
+                });
+                h2Headline.click();
+            });
+            section.querySelector(".content-list").appendChild(btnClose);
+        }
     }
 }, { threshold: 1.0 });
