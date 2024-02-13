@@ -1,5 +1,44 @@
 
 const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent); // 안드로이드 아이폰을 검사해 체크
+class SectionInfoManager {
+    constructor() {
+        this.sectionInfo = [];
+    }
+    addSectionInfo(section) {
+        this.sectionInfo.push(section);
+    }
+    getSectionInfo() {
+        return this.sectionInfo;
+    }
+    getSectionInfoById(id) {
+        return this.sectionInfo.find((section) => section.getId() == id);
+    }
+    getObjById(id) {
+        return this.sectionInfo.find((section) => section.getId() == id).getObj();
+    }
+}
+class SectionInfo {
+    constructor(id, multipleValue, obj, values = {}) {
+        this.id = id;
+        this.multipleValue = multipleValue;
+        this.obj = obj;
+        this.values = values;
+    }
+    getId() {
+        return this.id;
+    }
+    getMultipleValue() {
+        return this.multipleValue;
+    }
+    getObj() {
+        return this.obj;
+    }
+    getValues() {
+        return this.values;
+    }
+}
+const sectionInfoManager = new SectionInfoManager();
+
 const sectionInfo = [
     {
         // section-1
@@ -26,26 +65,7 @@ const sectionInfo = [
         multipleValue: 2,
         obj: document.querySelector("#scroll-section-3"),
     },
-    {
-        // section-4
-        multipleValue: 0,
-        obj: document.querySelector("#scroll-section-4"),
-    },
-    {
-        // section-5
-        multipleValue: 0,
-        obj: document.querySelector("#scroll-section-5"),
-    },
-    {
-        // section-6
-        multipleValue: 0,
-        obj: document.querySelector("#scroll-section-6"),
-    },
-    {
-        // section-7
-        multipleValue: 0,
-        obj: document.querySelector("#scroll-section-7"),
-    },
+    // 이후 contentSection은 동적으로 추가됨
 ]
 const messageInfo = [
     {
@@ -79,7 +99,7 @@ class sectionInfiniteScrollInfo {
         this.id = 0;
         this.sectionId = sectionId;
         this.isfetching = true;
-        this.sectionObj = sectionInfo.find((section) => section.obj.getAttribute("data-contentSectionId") == sectionId).obj;
+        this.sectionObj = document.querySelector(`section[data-contentSectionId='${sectionId}']`);
     }
 
     incrementId() {
@@ -173,11 +193,7 @@ const iconPathData = {
         "M8.707 11.182A4.5 4.5 0 0 0 10.025 8a4.5 4.5 0 0 0-1.318-3.182L8 5.525A3.5 3.5 0 0 1 9.025 8 3.5 3.5 0 0 1 8 10.475zM6.717 3.55A.5.5 0 0 1 7 4v8a.5.5 0 0 1-.812.39L3.825 10.5H1.5A.5.5 0 0 1 1 10V6a.5.5 0 0 1 .5-.5h2.325l2.363-1.89a.5.5 0 0 1 .529-.06"
     ]
 }
-
-const mousePointer = sectionInfo[1].obj.querySelector(".mouse-cursor");
-const modal = document.getElementById("myModal");
 let currentDivIndex = 0;
-
 let lastScrollTop = 0;
 
 // 비디오명 상수
@@ -186,9 +202,113 @@ const MOBILEVIDEONAME = "jabez_background_video_2_fontSize";
 
 // id에 scroll-section이 포함된 section들 중에서 content관련 id가 들어간 section의 정보를 infiniteScrollInfo에 추가하고, section정보에 조회 시작 ID를 추가.
 const infiniteScrollManager = new InfiniteScrollManager();
-sectionInfo.forEach(async (section) => {
-    if (section.obj.getAttribute("data-contentSectionId")) {
-        const sectionId = section.obj.getAttribute("data-contentSectionId");
+
+function createSection(id, contentSectionName, contentSectionColor) {
+    const startSectionId = 3;
+    const section = createElement("section", { classList: ["container-fluid"], id: `scroll-section-${startSectionId + id}`, "data-contentSectionId": `${id}`, style: { backgroundColor: `${contentSectionColor}` } }); // parameter로 받아서 적용할 수 있도록 수정
+
+    const container = createElement("div", { classList: ["container", "d-flex", "align-items-center", "justify-content-center", "flex-column"], style: { height: "100%" } });
+
+    const contentArea = createElement("div", { classList: ["content-area", "w-100", "my-5"] });
+
+    const heading = createElement("h2", { classList: ["content", "animation-content-right", "mb-5", "position-relative"] });
+
+    const specialText = createElement("span", { classList: ["spacial-text"] }, [`${contentSectionName}`]); // parameter로 받아서 적용할 수 있도록 수정
+
+    const caretIcon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    caretIcon.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+    caretIcon.setAttribute("width", "2rem");
+    caretIcon.setAttribute("height", "2rem");
+    caretIcon.setAttribute("fill", "currentColor");
+    caretIcon.classList.add("bi", "bi-caret-down-fill", "position-absolute");
+    caretIcon.setAttribute("viewBox", "0 0 16 16");
+
+    const caretPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    caretPath.setAttribute("d", "M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0");
+
+    caretIcon.appendChild(caretPath);
+    heading.appendChild(specialText);
+    heading.appendChild(caretIcon);
+
+    const contentList = createElement("div", { classList: ["content-list"] });
+
+    const row = createElement("row", { classList: ["row", "mb-md-3", "row-cols-md-3", "row-cols-sm-2", "row-cols-1", "content"] });
+
+    contentList.appendChild(row);
+    contentArea.appendChild(heading);
+    contentArea.appendChild(contentList);
+    container.appendChild(contentArea);
+    section.appendChild(container);
+
+    return section;
+}
+
+function createListItem(id, contentSectionName) {
+    return createElement("li", { classList: ["list-group-item", "list-group-item-action", "list-group-item-light"], "data-contentListId": `${id}` }, [`${contentSectionName}`]); // parameter로 받아서 적용할 수 있도록 수정
+}
+
+// API 호출해서 section 정보를 가져온 뒤 section을 생성
+async function createContentSectionInfo(sectionInfoManager) {
+    const contentSections = this.document.querySelector(".content-sections");
+    const contentListNavigator = this.document.querySelector(".contentListNavigator").querySelector(".list-group");
+    const json = await fetchData("/api/section/get");
+    json.forEach((data) => {
+        const newSection = createSection(data.id, data.contentSectionName, data.contentSectionColor);
+        contentSections.appendChild(newSection);
+        const newListItem = createListItem(data.id, data.contentSectionName);
+        contentListNavigator.appendChild(newListItem);
+    });
+    contentSections.querySelectorAll("section").forEach((section) => {
+        const sectionId = section.getAttribute("id").split("-")[2];
+        sectionInfoManager.addSectionInfo(new SectionInfo(sectionId, 0, { section: section }));
+    });
+}
+
+function getTotalOffsetTop(element) {
+    let totalOffsetTop = 0;
+
+    while (element) {
+        totalOffsetTop += element.offsetTop;
+        element = element.offsetParent;
+    }
+
+    return totalOffsetTop;
+}
+
+function applyStyle(element, style) {
+    Object.keys(style).forEach((key) => {
+        element.style[key] = style[key];
+    });
+}
+
+function applyStyleToElements(elements, style) {
+    elements.forEach((element) => {
+        applyStyle(element, style);
+    });
+}
+
+async function fetchData(api) {
+    if (api == null) {
+        return [];
+    }
+    try {
+        const response = await fetch(api);
+        const json = await response.json();
+        return json;
+    } catch (error) {
+        console.error('Failed to fetch data', error);
+        return [];
+    }
+}
+
+function setInfiniteScrollManager(infiniteScrollManager) {
+    const contentSectionArea = document.querySelector(".content-sections");
+    const contentSections = contentSectionArea.querySelectorAll("section")
+    if (contentSections.length === 0) {
+        return;
+    }
+    contentSections.forEach(async (section) => {
+        const sectionId = section.getAttribute("data-contentSectionId");
         infiniteScrollManager.addSection(sectionId);
         const json = await fetchData(`/api/content/get/SectionNum/${sectionId}`);
         if (json.length === 0) {
@@ -196,224 +316,262 @@ sectionInfo.forEach(async (section) => {
             infiniteScrollManager.stopFetching(sectionId);
         } else {
             json.forEach((info) => {
-                createCard(info, section.obj.querySelector(".row"), info.ID);
+                createCard(info, section.querySelector(".row"), info.ID);
                 infiniteScrollManager.changeId(sectionId, info.ID);
             });
         }
-    }
-});
-
-
-function getTotalOffsetTop(element) {
-    let totalOffsetTop = 0;
-
-    while (element) {
-        totalOffsetTop += element.offsetTop;
-        element = element.offsetParent;
-    }
-
-    return totalOffsetTop;
-}
-
-function getTotalOffsetTop(element) {
-    let totalOffsetTop = 0;
-
-    while (element) {
-        totalOffsetTop += element.offsetTop;
-        element = element.offsetParent;
-    }
-
-    return totalOffsetTop;
-}
-
-// 아이콘을 클릭하면 section으로 이동
-const scrollDownIcons = document.querySelectorAll("svg[class*='scrollDown']");
-for (let i = 0; i < scrollDownIcons.length; i++) {
-    scrollDownIcons[i].addEventListener("click", function (event) {
-        const section = document.querySelector(`#scroll-section-${i + 2}`);
-        window.scrollTo({ top: getTotalOffsetTop(section), behavior: "smooth" });
-        console.log("to move section " + (i + 2));
     });
 }
 
-
-window.addEventListener("click", function (event) {
-    if (event.target == modal) {
-        if (modal.classList.contains("d-flex")) {
-            modal.classList.remove("d-flex");
-        }
-        modal.classList.add("d-none");
-        event.target.querySelector("iframe").src = "";
-        document.body.style.overflow = "auto";
+function setDefaultSectionInfo(sectionInfoManager) {
+    const section1 = new SectionInfo(1, 2, {
+        section: document.querySelector("#scroll-section-1"),
+        message1: document.querySelector("#scroll-section-1").querySelectorAll(".content")[0],
+        message2: document.querySelector("#scroll-section-1").querySelectorAll(".content")[1]
+    },
+        {
+            message1_fadeIn_opacity: [0, 1, { start: 0, end: 0.14 }],
+            message1_fadeIn_transform: [10, 0, { start: 0, end: 0.14 }],
+            message1_fadeOut_opacity: [1, 0, { start: 0.18, end: 0.32 }],
+            message1_fadeOut_transform: [0, -10, { start: 0.18, end: 0.32 }],
+            message2_fadeIn_opacity: [0, 1, { start: 0.34, end: 0.48 }],
+            message2_fadeIn_transform: [10, 0, { start: 0.34, end: 0.48 }],
+            message2_fadeOut_opacity: [1, 0, { start: 0.52, end: 0.66 }],
+            message2_fadeOut_transform: [0, -10, { start: 0.52, end: 0.66 }],
+            message1_fadeIn_mobile: { start: 0, end: 0.14 },
+            message1_fadeOut_mobile: { start: 0.18, end: 0.32 },
+            message2_fadeIn_mobile: { start: 0.54, end: 0.68 },
+            message2_fadeOut_mobile: { start: 0.72, end: 0.86 },
+        });
+    const section2 = new SectionInfo(2, 2, {
+        section: document.querySelector("#scroll-section-2"),
+        message1: document.querySelector("#scroll-section-2").querySelectorAll(".content")[0],
+        message2: document.querySelector("#scroll-section-2").querySelectorAll(".content")[1]
+    }, {
+        message1_fadeIn_opacity: [0, 1, { start: 0, end: 0.14 }],
+        message1_fadeIn_transform: [10, 0, { start: 0, end: 0.14 }],
+        message1_fadeOut_opacity: [1, 0, { start: 0.18, end: 0.32 }],
+        message1_fadeOut_transform: [0, -10, { start: 0.18, end: 0.32 }],
+        message2_fadeIn_opacity: [0, 1, { start: 0.34, end: 0.48 }],
+        message2_fadeIn_transform: [10, 0, { start: 0.34, end: 0.48 }],
+        message2_fadeOut_opacity: [1, 0, { start: 0.52, end: 0.66 }],
+        message2_fadeOut_transform: [0, -10, { start: 0.52, end: 0.66 }],
+        message1_fadeIn_mobile: { start: 0, end: 0.14 },
+        message1_fadeOut_mobile: { start: 0.18, end: 0.32 },
+        message2_fadeIn_mobile: { start: 0.54, end: 0.68 },
+        message2_fadeOut_mobile: { start: 0.72, end: 0.86 },
+    });
+    const section3 = new SectionInfo(3, 2, { section: document.querySelector("#scroll-section-3") });
+    sectionInfoManager.addSectionInfo(section1);
+    sectionInfoManager.addSectionInfo(section2);
+    sectionInfoManager.addSectionInfo(section3);
+}
+// 아이콘을 클릭하면 section으로 이동
+function setScrollDownIcon() {
+    const scrollDownIcons = document.querySelectorAll("svg[class*='scrollDown']");
+    for (let i = 0; i < scrollDownIcons.length; i++) {
+        scrollDownIcons[i].addEventListener("click", function (event) {
+            const section = document.querySelector(`#scroll-section-${i + 2}`);
+            window.scrollTo({ top: getTotalOffsetTop(section), behavior: "smooth" });
+        });
     }
-})
+}
+function setModalBehavior() {
+    const modal = document.getElementById("myModal");
 
-window.addEventListener("DOMContentLoaded", function (event) {
-    const video = sectionInfo[1].obj.querySelector("video");
+    modal.querySelector(".modal-content").addEventListener("click", function (event) {
+        if (event.target == this) {
+            if (modal.classList.contains("d-flex")) {
+                modal.classList.remove("d-flex");
+            }
+            modal.classList.add("d-none");
+            event.target.querySelector("iframe").src = "";
+            document.body.style.overflow = "auto";
+        }
+    });
+
+    window.addEventListener("click", function (event) {
+        if (event.target == modal) {
+            if (modal.classList.contains("d-flex")) {
+                modal.classList.remove("d-flex");
+            }
+            modal.classList.add("d-none");
+            event.target.querySelector("iframe").src = "";
+            document.body.style.overflow = "auto";
+        }
+    })
+}
+function setVideoSrc() {
+    const video = document.querySelector("#scroll-section-2").querySelector("video");
     video.querySelectorAll("source")[0].setAttribute("src", `./video/${isMobile ? MOBILEVIDEONAME : VIDEONAME}.webm`);
     video.querySelectorAll("source")[1].setAttribute("src", `./video/${isMobile ? MOBILEVIDEONAME : VIDEONAME}.mp4`);
     video.load();
-});
-
-modal.querySelector(".modal-content").addEventListener("click", function (event) {
-    if (event.target == this) {
-        if (modal.classList.contains("d-flex")) {
-            modal.classList.remove("d-flex");
-        }
-        modal.classList.add("d-none");
-        event.target.querySelector("iframe").src = "";
-        document.body.style.overflow = "auto";
-    }
-});
-
-sectionInfo[1].obj.querySelector(".sticky-area").addEventListener("mousemove", function (event) {
-    if (mousePointer.classList.contains("hover") != true) {
-        mousePointer.classList.add("hover");
-    }
-
-    mousePointer.style.left = `${event.offsetX}px`;
-    mousePointer.style.top = `${event.offsetY}px`;
-
-    /* 포인터를 부드럽게 움직이기 위한 로직 (transition 속성이 없어도 됨) - 동작하는 로직이기 때문에 남겨놓음 */
-    // // 현재 아이콘의 위치
-    // const iconX = parseFloat(mousePointer.style.left) || 0;
-    // const iconY = parseFloat(mousePointer.style.top) || 0;
-
-    // // 마우스의 현재 위치
-    // const mouseX = event.offsetX;
-    // const mouseY = event.offsetY;
-
-    // // 비율 계산
-    // const ratio = 0.3; // 조절 가능한 비율
-    // const deltaX = (mouseX - iconX) * ratio;
-    // const deltaY = (mouseY - iconY) * ratio;
-
-    // 아이콘의 새로운 위치 설정
-    // mousePointer.style.left = `${iconX + deltaX}px`;
-    // mousePointer.style.top = `${iconY + deltaY}px`;
-});
-
-sectionInfo[1].obj.querySelector(".content-area").addEventListener("mouseleave", function (event) {
-    mousePointer.classList.remove("hover");
-});
-
-// scroll-section-2의 video를 찾아서 재생/일시정지 한다.
-sectionInfo[1].obj.querySelector(".content-area").addEventListener("click", function (event) {
-    const video = sectionInfo[1].obj.querySelector("video");
-    if (video.paused) {
-        video.play();
-        const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-        path.setAttribute("d", iconPathData.pauseIcon);
-        mousePointer.replaceChildren(path);
-    } else {
-        video.pause();
-        const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-        path.setAttribute("d", iconPathData.playIcon);
-        mousePointer.replaceChildren(path);
-    }
-});
-
-
-sectionInfo[1].obj.querySelector(".volume-control").addEventListener("mouseover", function (event) {
-    console.log("mouseover in volume-control");
-    mousePointer.style.opacity = "0";
-});
-sectionInfo[1].obj.querySelector(".volume-control").addEventListener("mouseleave", function (event) {
-    console.log("mouseleave in volume-control");
-    mousePointer.style.opacity = "1";
-});
-sectionInfo[1].obj.querySelector(".volume-control").addEventListener("click", function (event) {
-    // scroll-section-2의 video를 찾아서 볼륩을 조절한다.
-    const video = sectionInfo[1].obj.querySelector("video");
-    if (video.muted) {
-        video.muted = false;
-        this.replaceChildren();
-        // 아이콘의 path를 바꾼다.
-        const path1 = document.createElementNS("http://www.w3.org/2000/svg", "path");
-        path1.setAttribute("d", iconPathData.volumeUpIcon[0]);
-        const path2 = document.createElementNS("http://www.w3.org/2000/svg", "path");
-        path2.setAttribute("d", iconPathData.volumeUpIcon[1]);
-        const path3 = document.createElementNS("http://www.w3.org/2000/svg", "path");
-        path3.setAttribute("d", iconPathData.volumeUpIcon[2]);
-
-        this.replaceChildren(path1, path2, path3);
-    } else {
-        video.muted = true;
-        // 아이콘의 path를 바꾼다.
-        const path1 = document.createElementNS("http://www.w3.org/2000/svg", "path");
-        path1.setAttribute("d", iconPathData.muteIcon)
-        this.replaceChildren(path1);
-    }
-});
-
-const contentListNavigator = document.querySelector(".contentListNavigator");
-
-sectionInfo.forEach((section) => {
-    const contentListId = section.obj.getAttribute("data-contentSectionId");
-    if (contentListId) {
-        const h2 = section.obj.querySelector("h2");
-
-        h2.addEventListener("click", toggleContent);
-
-        const relatedNavItem = contentListNavigator.querySelector(`[data-contentListId="${contentListId}"]`);
-        if (relatedNavItem) {
-            relatedNavItem.addEventListener("click", navigateToSection);
-        }
-    }
-});
-
-function toggleContent(event) {
-    const h2 = this;
-    h2.classList.toggle("show");
-
-    const contentList = h2.nextElementSibling;
-    const isContentVisible = h2.classList.contains("show");
-
-    animateContentList(contentList, isContentVisible);
-
-    const contentListId = h2.closest("[data-contentSectionId]").getAttribute("data-contentSectionId");
-    updateNavigationActiveState(contentListId, isContentVisible);
 }
-
-function animateContentList(contentList, isVisible) {
-    let count = 0;
-    contentList.style.height = isVisible ? "auto" : contentList.querySelector(".col").offsetHeight + "px";
-
-    contentList.querySelectorAll(".col").forEach((col) => {
-        if (count >= 3) {
-            const animationClass = isVisible ? "animation-fadeIn-down-bounce" : "animation-fadeOut-up-bounce";
-            col.classList.remove(isVisible ? "animation-fadeOut-up-bounce" : "animation-fadeIn-down-bounce");
-            col.classList.add(animationClass);
+function setVideoClick() {
+    const section = document.querySelector("#scroll-section-2");
+    const mousePointer = section.querySelector(".mouse-cursor");
+    section.querySelector(".sticky-area").addEventListener("mousemove", function (event) {
+        if (mousePointer.classList.contains("hover") != true) {
+            mousePointer.classList.add("hover");
         }
-        count++;
+
+        mousePointer.style.left = `${event.offsetX}px`;
+        mousePointer.style.top = `${event.offsetY}px`;
+
+        /* 포인터를 부드럽게 움직이기 위한 로직 (transition 속성이 없어도 됨) - 동작하는 로직이기 때문에 남겨놓음 */
+        // // 현재 아이콘의 위치
+        // const iconX = parseFloat(mousePointer.style.left) || 0;
+        // const iconY = parseFloat(mousePointer.style.top) || 0;
+
+        // // 마우스의 현재 위치
+        // const mouseX = event.offsetX;
+        // const mouseY = event.offsetY;
+
+        // // 비율 계산
+        // const ratio = 0.3; // 조절 가능한 비율
+        // const deltaX = (mouseX - iconX) * ratio;
+        // const deltaY = (mouseY - iconY) * ratio;
+
+        // 아이콘의 새로운 위치 설정
+        // mousePointer.style.left = `${iconX + deltaX}px`;
+        // mousePointer.style.top = `${iconY + deltaY}px`;
     });
-}
 
-function updateNavigationActiveState(contentListId, isActive) {
-    contentListNavigator.querySelectorAll(".list-group-item").forEach((item) => {
-        if (item.getAttribute("data-contentListId") === contentListId) {
-            isActive ? item.classList.add("active") : item.classList.remove("active");
+    section.querySelector(".content-area").addEventListener("mouseleave", function (event) {
+        mousePointer.classList.remove("hover");
+    });
+
+    // scroll-section-2의 video를 찾아서 재생/일시정지 한다.
+    section.querySelector(".content-area").addEventListener("click", function (event) {
+        const video = section.querySelector("video");
+        if (video.paused) {
+            video.play();
+            const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            path.setAttribute("d", iconPathData.pauseIcon);
+            mousePointer.replaceChildren(path);
+        } else {
+            video.pause();
+            const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            path.setAttribute("d", iconPathData.playIcon);
+            mousePointer.replaceChildren(path);
+        }
+    });
+
+    section.querySelector(".volume-control").addEventListener("mouseover", function (event) {
+        mousePointer.style.opacity = "0";
+    });
+    section.querySelector(".volume-control").addEventListener("mouseleave", function (event) {
+        mousePointer.style.opacity = "1";
+    });
+    section.querySelector(".volume-control").addEventListener("click", function (event) {
+        // scroll-section-2의 video를 찾아서 볼륩을 조절한다.
+        const video = section.querySelector("video");
+        if (video.muted) {
+            video.muted = false;
+            this.replaceChildren();
+            // 아이콘의 path를 바꾼다.
+            const path1 = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            path1.setAttribute("d", iconPathData.volumeUpIcon[0]);
+            const path2 = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            path2.setAttribute("d", iconPathData.volumeUpIcon[1]);
+            const path3 = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            path3.setAttribute("d", iconPathData.volumeUpIcon[2]);
+
+            this.replaceChildren(path1, path2, path3);
+        } else {
+            video.muted = true;
+            // 아이콘의 path를 바꾼다.
+            const path1 = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            path1.setAttribute("d", iconPathData.muteIcon)
+            this.replaceChildren(path1);
         }
     });
 }
-
-function navigateToSection(event) {
-    const contentListId = this.getAttribute("data-contentListId");
-    const contentSection = infiniteScrollManager.getSectionObj(contentListId);
-    window.scrollTo({ top: getTotalOffsetTop(contentSection), behavior: "smooth" });
-
-    const selectedH2 = contentSection.querySelector("h2.content");
-    const contentSections = infiniteScrollManager.getSectionObjs();
-    const h2InContentSections = contentSections.map((section) => section.querySelector("h2.content"));
-
-    h2InContentSections.forEach((unselectedH2) => {
-        if (unselectedH2 == selectedH2 || unselectedH2.classList.contains("show")) {
-            unselectedH2.click();
+function setContentSectionBehavior(infiniteScrollManager) {
+    const contentListNavigator = document.querySelector(".contentListNavigator");
+    document.querySelectorAll("section[data-contentSectionId]").forEach((section) => {
+        const contentListId = section.getAttribute("data-contentSectionId");
+        if (contentListId) {
+            const h2 = section.querySelector("h2");
+            h2.addEventListener("click", toggleContent);
+            const relatedNavItem = contentListNavigator.querySelector(`[data-contentListId="${contentListId}"]`);
+            if (relatedNavItem) {
+                relatedNavItem.addEventListener("click", navigateToSection);
+            }
         }
     });
+
+    function navigateToSection(event) {
+        const contentListId = this.getAttribute("data-contentListId");
+        const contentSection = infiniteScrollManager.getSectionObj(contentListId);
+        window.scrollTo({ top: getTotalOffsetTop(contentSection), behavior: "smooth" });
+
+        const selectedH2 = contentSection.querySelector("h2.content");
+        const contentSections = infiniteScrollManager.getSectionObjs();
+        const h2InContentSections = contentSections.map((section) => section.querySelector("h2.content"));
+
+        h2InContentSections.forEach((unselectedH2) => {
+            if (unselectedH2 == selectedH2 || unselectedH2.classList.contains("show")) {
+                unselectedH2.click();
+            }
+        });
+    }
+
+    function toggleContent(event) {
+        const h2 = this;
+        h2.classList.toggle("show");
+
+        const contentList = h2.nextElementSibling;
+        const isContentVisible = h2.classList.contains("show");
+
+        animateContentList(contentList, isContentVisible);
+
+        const contentListId = h2.closest("[data-contentSectionId]").getAttribute("data-contentSectionId");
+        updateNavigationActiveState(contentListId, isContentVisible);
+    }
+
+    function animateContentList(contentList, isVisible) {
+        let count = 0;
+        if (isVisible) {
+            contentList.style.height = "auto";
+        } else {
+            contentList.style.height = contentList.querySelector(".col") === null ? "0px" : contentList.querySelector(".col").offsetHeight + "px";
+        }
+        if (contentList.querySelector(".col") !== null) {
+            contentList.querySelectorAll(".col").forEach((col) => {
+                if (count >= 3) {
+                    const animationClass = isVisible ? "animation-fadeIn-down-bounce" : "animation-fadeOut-up-bounce";
+                    col.classList.remove(isVisible ? "animation-fadeOut-up-bounce" : "animation-fadeIn-down-bounce");
+                    col.classList.add(animationClass);
+                }
+                count++;
+            });
+        }
+    }
+
+    function updateNavigationActiveState(contentListId, isActive) {
+        contentListNavigator.querySelectorAll(".list-group-item").forEach((item) => {
+            if (item.getAttribute("data-contentListId") === contentListId) {
+                isActive ? item.classList.add("active") : item.classList.remove("active");
+            }
+        });
+    }
 }
 
-
+window.addEventListener("DOMContentLoaded", async function (event) {
+    setDefaultSectionInfo(sectionInfoManager);
+    createContentSectionInfo(sectionInfoManager).then(() => {
+        setVideoSrc();
+        setVideoClick();
+        setScrollDownIcon();
+        setModalBehavior();
+        setInfiniteScrollManager(infiniteScrollManager);
+        setContentSectionBehavior(infiniteScrollManager);
+        resizeSection();
+        resizeVideo();
+        resizeNavigator();
+    });
+});
 
 
 
@@ -421,7 +579,7 @@ function navigateToSection(event) {
 function resizeIframe() {
     const width = window.innerWidth;
     const height = window.innerHeight;
-    const iframe = modal.querySelector("iframe");
+    const iframe = document.getElementById("myModal").querySelector("iframe");
 
     // 데스크탑에서 길이, 높이 변경 시 iframe의 크기를 조절
     if (isMobile != true && (width > height)) {
@@ -453,7 +611,7 @@ function resizeIframe() {
 function resizeVideo() {
     const width = window.innerWidth;
     const height = window.innerHeight;
-    const video = sectionInfo[1].obj.querySelector("video");
+    const video = document.querySelector("#scroll-section-2").querySelector("video");
 
     // 세로 모드일 때
     if (isMobile != true && (width > height)) {
@@ -471,18 +629,6 @@ function resizeVideo() {
     else if (isMobile && window.matchMedia("(orientation: landscape)").matches) {
         handleClassList(video, "object-fit-cover", "object-fit-contain");
     }
-}
-
-function applyStyle(element, style) {
-    Object.keys(style).forEach((key) => {
-        element.style[key] = style[key];
-    });
-}
-
-function applyStyleToElements(elements, style) {
-    elements.forEach((element) => {
-        applyStyle(element, style);
-    });
 }
 
 function resizeNavigator() {
@@ -518,19 +664,27 @@ function resizeNavigator() {
 
 // resize 이벤트 발생 시 section의 높이를 조절
 function resizeSection() {
-    for (let i = 0; i < sectionInfo.length; i++) {
-        if (sectionInfo[i].multipleValue > 0) {
-            applyStyle(sectionInfo[i].obj, { height: `${sectionInfo[i].multipleValue * window.innerHeight}px` })
+    sectionInfoManager.getSectionInfo().forEach((section) => {
+        const multipleValue = section.getMultipleValue();
+        const sectionObjs = section.getObj();
+        if (multipleValue > 0) {
+            applyStyle(sectionObjs.section, { height: `${multipleValue * window.innerHeight}px` });
         }
-    }
+    });
+    // for (let i = 0; i < sectionInfo.length; i++) {
+    //     if (sectionInfo[i].multipleValue > 0) {
+    //         applyStyle(sectionInfo[i].obj, { height: `${sectionInfo[i].multipleValue * window.innerHeight}px` })
+    //     }
+    // }
 }
 
 // 모바일에서 가로모드일 때 scroll-section-1의 메시지의 위치를 조절
 function resizeMessage() {
     const width = window.innerWidth;
     const height = window.innerHeight;
-    const message1 = sectionInfo[0].obj.querySelectorAll(".content")[0];
-    const message2 = sectionInfo[0].obj.querySelectorAll(".content")[1];
+    const section1 = document.querySelector("#scroll-section-1");
+    const message1 = section1.querySelectorAll(".content")[0];
+    const message2 = section1.querySelectorAll(".content")[1];
 
     // 세로 모드일 때
     if (isMobile && window.matchMedia("(orientation: portrait)").matches) {
@@ -542,9 +696,6 @@ function resizeMessage() {
     }
 }
 
-resizeSection();
-resizeVideo();
-resizeNavigator();
 window.addEventListener("resize", () => {
     resizeSection();
     resizeIframe();
@@ -576,19 +727,7 @@ function createElement(tagName, attributes, children) {
     return element;
 }
 
-async function fetchData(api) {
-    if (api == null) {
-        return [];
-    }
-    try {
-        const response = await fetch(api);
-        const json = await response.json();
-        return json;
-    } catch (error) {
-        console.error('Failed to fetch data', error);
-        return [];
-    }
-}
+
 
 function createCard(info, rowTag, id) {
     // 카드 생성 로직
@@ -615,6 +754,7 @@ function createCard(info, rowTag, id) {
     cardTag.addEventListener("click", function () {
         const width = window.innerWidth;
         const height = window.innerHeight;
+        const modal = document.getElementById("myModal");
         const iframe = modal.querySelector("iframe");
         // 가로 모드일 때
         if (width > height) {
@@ -644,9 +784,12 @@ function createCard(info, rowTag, id) {
 async function fetchDataForSection(infiniteScrollManager, sectionId, count) {
     const data = [];
     for (let i = 0; i < count; i++) {
+        if (infiniteScrollManager.getIsFetching(sectionId) == false) {
+            break;
+        }
         try {
             const queryCount = 1;
-            const json = await fetchData(`/api/content/get/${infiniteScrollManager.getIdBySection(sectionId)}/${queryCount}`);
+            const json = await fetchData(`/api/content/get/section/${sectionId}/${infiniteScrollManager.getIdBySection(sectionId)}/${queryCount}`);
             if (json.length === 0) {
                 infiniteScrollManager.stopFetching(sectionId);
                 break;
@@ -661,30 +804,58 @@ async function fetchDataForSection(infiniteScrollManager, sectionId, count) {
     return data;
 }
 
-// 페이지 처음 로딩 시 이미지를 불러오기 위해 사용
-async function preloadImages(infiniteScrollManager) {
-    // id변수를 활용해서 /api/centerData/로 데이터를 ajax 요청한다.
-    const sections = [1, 2, 3, 4];
-    const dataPerSection = 5;
+// 이미지 로딩 함수
+async function preloadImages(sections) {
     const allData = [];
-
+    const dataPerSection = 5;
 
     for (const sectionId of sections) {
         const data = await fetchDataForSection(infiniteScrollManager, sectionId, dataPerSection);
         allData.push(...data);
     }
 
+    return allData;
+}
+
+// DOM 조작 함수
+function updateDOMWithData(allData, infiniteScrollManager) {
     allData.forEach((data) => {
         let row = infiniteScrollManager.getSectionObj(data[0].ContentSectionNum).querySelector(".row");
         data.forEach((info) => {
             createCard(info, row, info.ID);
         });
     });
+}
+
+// 페이지 로딩 시 실행되는 함수
+async function initializePage(infiniteScrollManager) {
+    const contentSectionArea = document.querySelector(".content-sections");
+    const jsonPromise = await fetchData("/api/section/get");
+    const sections = jsonPromise.map(section => section.id);
+
+    if (sections.length === 0) {
+        return;
+    }
+    const allData = await preloadImages(sections);
+
+    updateDOMWithData(allData, infiniteScrollManager);
 
     for (const sectionId of sections) {
+        // 컨텐츠가 있으면 더보기 버튼 추가
         if (infiniteScrollManager.getIsFetching(sectionId) == true) {
             addMoreButton(sectionId, infiniteScrollManager, intersectionObserverUnlimitedScroll);
-        }else{
+        } 
+        // 컨텐츠가 하나도 없으면 닫기 버튼과 메시지 추가
+        else if ((infiniteScrollManager.getIsFetching(sectionId) == false) && (infiniteScrollManager.getSectionObj(sectionId).querySelector(".content-list").querySelector(".col") == null)) {
+            const sectionContentList = infiniteScrollManager.getSectionObj(sectionId).querySelector(".content-list");
+            const h3 = createElement("h3", {}, ["컨텐츠가 없습니다"]);
+            sectionContentList.removeChild(sectionContentList.querySelector("row"));
+            sectionContentList.classList.add("d-flex", "flex-column", "justify-content-center", "align-items-center");
+            sectionContentList.appendChild(h3);
+            addCloseButton(sectionId, infiniteScrollManager);
+        } 
+        // 더이상 추가적인 컨텐츠가 없으면 닫기 버튼 추가
+        else {
             addCloseButton(sectionId, infiniteScrollManager);
         }
     }
@@ -725,10 +896,10 @@ function addCloseButton(sectionId, infiniteScrollManager) {
     const btnClose = createElement("button", { classList: ["btn", "btn-outline-dark"], id: `btn-close-${sectionId}` }, ["닫기"]);
 
     btnClose.addEventListener("click", function (event) {
-        const h2Headline = sectionObj.querySelector("h2.content"); 
+        const h2Headline = sectionObj.querySelector("h2.content");
         const navigator = document.querySelector(".contentListNavigator").querySelectorAll(".list-group-item");
         navigator.forEach((item) => {
-            if(item.getAttribute("data-contentListId") == sectionId) {
+            if (item.getAttribute("data-contentListId") == sectionId) {
                 item.classList.remove("active");
             }
         });
@@ -738,20 +909,25 @@ function addCloseButton(sectionId, infiniteScrollManager) {
     contentListArea.appendChild(btnClose);
 }
 
-function settingContentSectionHeight(){
+function settingContentSectionHeight() {
     const contentSections = document.querySelectorAll("section[id*=scroll-section][data-contentSectionId]");
     contentSections.forEach((section) => {
         const contentListArea = section.querySelector(".content-list");
-        const contentList = contentListArea.querySelectorAll(".col");
-        const contentListHeight = contentList[0].clientHeight;
+        const contentList = contentListArea.querySelector(".col");
+        if (contentList == null) {
+            contentListArea.style.height = "0px";
+            return;
+        }
+        const contentListHeight = contentList.clientHeight;
         contentListArea.style.height = `${contentListHeight}px`;
     });
 }
 
 history.scrollRestoration = "manual"; // 뒤로가기 시 스크롤 위치를 유지하지 않음
 window.addEventListener("load", (e) => {
-    preloadImages(infiniteScrollManager);
-    settingContentSectionHeight();
+    initializePage(infiniteScrollManager).then(() => {
+        settingContentSectionHeight();
+    });
 })
 
 function calculateValue(animationValues, scrollInSection, activedSectionHeight) {
@@ -779,8 +955,8 @@ function calculateValue(animationValues, scrollInSection, activedSectionHeight) 
 
 function playAnimation(activeSectionIndex, previousHeight) {
     const yoffset = window.scrollY;
-    const sectionObj = sectionInfo[activeSectionIndex].obj;
-    const sectionValues = sectionInfo[activeSectionIndex].values
+    const sectionObj = document.querySelector(`#scroll-section-${activeSectionIndex + 1}`);
+    const sectionValues = sectionInfoManager.getSectionInfoById(activeSectionIndex + 1).getValues();
     const activeSectionHeight = sectionObj.clientHeight;
     const scrollInSection = yoffset - previousHeight;
     const scrollRateInSection = scrollInSection / activeSectionHeight;
@@ -826,14 +1002,15 @@ function handleAnimation(message, addAnimation, removeAnimation) {
 
 function playMobileAnimation(activeSectionIndex, previousHeight, direction) {
     const yoffset = window.scrollY;
-    const sectionObj = sectionInfo[activeSectionIndex].obj;
+    const sectionObj = document.querySelector(`#scroll-section-${activeSectionIndex + 1}`);
     const activeSectionHeight = sectionObj.clientHeight;
     const scrollInSection = yoffset - previousHeight;
     const scrollRateInSection = scrollInSection / activeSectionHeight;
     switch (activeSectionIndex) {
         case 0:
             {
-                const messageInSection = messageInfo[0];
+                const messageInSection = sectionInfoManager.getSectionInfoById(1).getObj();
+                messageInfo[0];
                 const message1 = messageInSection.obj[0];
                 const message2 = messageInSection.obj[1];
                 const animationValues = messageInSection.values;
@@ -1022,7 +1199,9 @@ function changeMultipleSvgIcons(elements, iconPaths) {
 const intersectionObserverSection2 = new IntersectionObserver((entries, observer) => {
     const [entry] = entries;
     const video = entry.target.querySelector("video");
-    const volumeControl = sectionInfo[1].obj.querySelector(".volume-control");
+    const section = entry.target;
+    const mousePointer = section.querySelector(".mouse-cursor");
+    const volumeControl = section.querySelector(".volume-control");
 
     // scroll-section-2가 닿으면 음소거인 상태로 재생하고, 닿지 않으면 video를 멈추고, 음소거한다.
     if (entry.isIntersecting) {
@@ -1065,10 +1244,11 @@ intersectionObserverContentSection.observe(document.querySelector(".content-sect
 const intersectionObserverUnlimitedScroll = new IntersectionObserver(async (entries, observer) => {
     const [entry] = entries;
     if (entry.isIntersecting && entry.intersectionRatio > 0.5) {
-        const sectionInfoItem = sectionInfo.find(item => item.obj.querySelector("div[id*=infinite-scroll-trigger]") == entry.target);
+        const contentSections = document.querySelectorAll("section[data-contentSectionId]");
+        const sectionInfoItem = Array.from(contentSections).find(contentSection => contentSection.querySelector("div[id*=infinite-scroll-trigger]") == entry.target);
         if (!sectionInfoItem) return;
 
-        const sectionId = sectionInfoItem.obj.getAttribute("data-contentSectionId");
+        const sectionId = sectionInfoItem.getAttribute("data-contentSectionId");
         const section = infiniteScrollManager.getSectionObj(sectionId);
         const isFetching = infiniteScrollManager.getIsFetching(sectionId);
 
@@ -1083,10 +1263,10 @@ const intersectionObserverUnlimitedScroll = new IntersectionObserver(async (entr
             observer.unobserve(entry.target);
             const btnClose = createElement("button", { classList: ["btn", "btn-outline-dark"], id: `btn-close-${sectionId}` }, ["닫기"]);
             btnClose.addEventListener("click", function (event) {
-                const h2Headline = section.querySelector("h2.content"); 
+                const h2Headline = section.querySelector("h2.content");
                 const navigator = document.querySelector(".contentListNavigator").querySelectorAll(".list-group-item");
                 navigator.forEach((item) => {
-                    if(item.getAttribute("data-contentListId") == sectionId) {
+                    if (item.getAttribute("data-contentListId") == sectionId) {
                         item.classList.remove("active");
                     }
                 });
@@ -1103,14 +1283,14 @@ const intersectionObserverUnlimitedScroll = new IntersectionObserver(async (entr
             });
         });
         // 3개의 데이터를 불러오지 못하면 DB에 더이상 데이터가 없다고 판단하고 닫기 버튼을 생성한다.
-        if(data.length < 3) {
+        if (data.length < 3) {
             observer.unobserve(entry.target);
             const btnClose = createElement("button", { classList: ["btn", "btn-outline-dark"], id: `btn-close-${sectionId}` }, ["닫기"]);
             btnClose.addEventListener("click", function (event) {
-                const h2Headline = section.querySelector("h2.content"); 
+                const h2Headline = section.querySelector("h2.content");
                 const navigator = document.querySelector(".contentListNavigator").querySelectorAll(".list-group-item");
                 navigator.forEach((item) => {
-                    if(item.getAttribute("data-contentListId") == sectionId) {
+                    if (item.getAttribute("data-contentListId") == sectionId) {
                         item.classList.remove("active");
                     }
                 });
