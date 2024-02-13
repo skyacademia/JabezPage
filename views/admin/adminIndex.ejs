@@ -112,7 +112,7 @@
             <h1 class="h2">Dashboard</h1>
           </div>
           <!-- 일일 페이지 방문자 수와 총 방문자 수를 표시해주는 카드 컴포넌트 -->
-          <div class="row mb-3">
+          <div class="row row-gap-3 mb-3">
             <div class="col-md-6 col-lg-3">
               <div class="card text-center" id="dailyVisitorsCard">
                 <div class="card-header">
@@ -140,7 +140,7 @@
               목록 더 보기
             </a>
           </div>
-          <div class="row row-cols-lg-4 row-cols-md-3 row-cols-sm-2 px-3">
+          <div class="row row-cols-lg-4 row-cols-md-3 row-cols-sm-2 row-cols-1 px-3">
             <% for(var i=0; i<data.length; i++){ %>
               <div class="col">
                 <div class="card shadow-sm mb-3" data-src=<%=data[i].MemberYoutubeLink %>>

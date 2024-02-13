@@ -169,13 +169,21 @@ app.get('/admin/manageContent', (req, res) => {
       }
     });
     // 데이터베이스에서 데이터를 가져온 뒤 adminIndex.ejs에 담아 전송
-    db.all('SELECT * FROM Member_Information_tbl ORDER BY ID LIMIT 16', (err, rows) => {
+    db.all('SELECT m.id, m.MemberYoutubeTitle, m.MemberYoutubeLink, m.MemberYoutubeThumbnailLink, m.ContentSectionNum, cs.contentSectionName as ContentSectionName FROM Member_Information_tbl as m INNER JOIN contentSection_Information_tbl as cs on m.ContentSectionNum = cs.id ORDER BY m.ID LIMIT 16', (err, rows) => {
       if (err) {
         console.error(err.message);
       } else {
-        console.log('Query successfully executed.');
-        res.render('./admin/adminManageContent.ejs', { data: rows });
-        console.log("page rendering success.");
+        const rowData = rows;
+        db.all('SELECT * FROM contentSection_Information_tbl', (err, rows) => {
+          if (err) {
+            console.error(err.message);
+          } else {
+            console.log('Query successfully executed.');
+            const contentSectionData = rows;
+            res.render('./admin/adminManageContent.ejs', { data: rowData, contentSectionData: contentSectionData });
+            console.log("page rendering success.");
+          }
+        });
       }
     });
     // 데이터베이스 연결 종료
@@ -192,6 +200,38 @@ app.get('/admin/manageContent', (req, res) => {
   }
 });
 
+app.get('/admin/manageContentSection', (req, res) => {
+  if (req.session.isLogin != true) {
+    res.redirect('/admin/login');
+  }
+  
+  let db = new sqlite3.Database('./database/Jabez_database.db', sqlite3.OPEN_READONLY, (err) => {
+    if (err) {
+      console.error(err.message);
+    } else {
+      console.log('Connected to the database.');
+    }
+  });
+  // 데이터베이스에서 데이터를 가져온 뒤 adminIndex.ejs에 담아 전송
+  db.all('SELECT * FROM contentSection_Information_tbl', (err, rows) => {
+    if (err) {
+      console.error(err.message);
+    } else {
+      console.log('Query successfully executed.');
+      res.render('./admin/adminManageContentSection.ejs', { data: rows });
+      console.log("page rendering success.");
+    }
+  });
+  // 데이터베이스 연결 종료
+  db.close((err) => {
+    if (err) {
+      console.error(err.message);
+    } else {
+      console.log('Close the database connection.');
+    }
+  });
+});
+
 // 계정 관리를 클릭하면 adminManageACcount.ejs을 render
 app.get('/admin/manageAccount', (req, res) => {
   if (req.session.isLogin) {
@@ -201,9 +241,167 @@ app.get('/admin/manageAccount', (req, res) => {
   }
 });
 
+// API 요청 시 컨텐츠 페이지를 관리하는 contentSection 정보를 가져옴
+app.get('/api/section/get', (req, res) => {
+  let db = new sqlite3.Database('./database/Jabez_database.db', sqlite3.OPEN_READONLY, (err) => {
+    if (err) {
+      console.error(err.message);
+    } else {
+      console.log('Connected to the database.');
+    }
+  });
+  // 데이터베이스에서 데이터를 가져옴
+  db.all(`SELECT * FROM contentSection_Information_tbl`, (err, rows) => {
+    if (err) {
+      console.error(err.message);
+    } else {
+      console.log('Query successfully executed.');
+      res.send(rows);
+    }
+  });
+  // 데이터베이스 연결 종료
+  db.close((err) => {
+    if (err) {
+      console.error(err.message);
+    } else {
+      console.log('Close the database connection.');
+    }
+  });
+});
+
+// API 요청 시 컨텐츠 페이지를 관리하는 contentSection 정보를 추가
+app.post('/api/section/create', (req, res) => {
+  if (req.session.isLogin != true) {
+    console.log("로그인이 되어있지 않습니다.");
+    res.redirect('/admin/login');
+  }
+  const sectionName = req.body.sectionName;
+  const sectionColor = req.body.sectionColor;
+  let db = new sqlite3.Database('./database/Jabez_database.db', sqlite3.OPEN_READWRITE, (err) => {
+    if (err) {
+      console.error(err.message);
+    } else {
+      console.log('Connected to the database.');
+    }
+  });
+  // 데이터베이스에 데이터를 추가
+  const sqlQuery = `INSERT INTO contentSection_Information_tbl (contentSectionName,contentSectionColor) VALUES (?,?)`;
+  db.run(sqlQuery, [sectionName,sectionColor], (err) => {
+    if (err) {
+      console.error(err.message);
+    } else {
+      // 데이터베이스에 추가되면 manageContent 페이지로 이동
+      console.log('Query successfully executed. 컨텐츠 페이지 추가 성공');
+      res.redirect('/admin/manageContentSection');
+    }
+  });
+  // 데이터베이스 연결 종료
+  db.close((err) => {
+    if (err) {
+      console.error(err.message);
+    } else {
+      console.log('Close the database connection.');
+    }
+  });
+});
+
+app.post('/api/section/update', (req, res) => {
+  if (req.session.isLogin != true) {
+    console.log("로그인이 되어있지 않습니다.");
+    res.redirect('/admin/login');
+  }
+  const contentSectionName = req.body.contentSectionName;
+  const contentSectionColor = req.body.contentSectionColor;
+  const contentSectionId = req.body.contentSectionId;
+  const contentSectionIdArray = [];
+  const contentSectionNameArray = [];
+  const contentSectionColorArray = [];
+  if (typeof contentSectionId === 'string') {
+    contentSectionIdArray.push(contentSectionId);
+    contentSectionNameArray.push(contentSectionName);
+    contentSectionColorArray.push(contentSectionColor);
+  }
+  else {
+    contentSectionIdArray.push(...contentSectionId);
+    contentSectionNameArray.push(...contentSectionName);
+    contentSectionColorArray.push(...contentSectionColor);
+  }
+  const inputInfo = [];
+
+  contentSectionIdArray.forEach((id, index) => {
+    inputInfo.push({ id: id, contentSectionName: contentSectionNameArray[index], contentSectionColor: contentSectionColorArray[index] });
+  });
+  let db = new sqlite3.Database('./database/Jabez_database.db', sqlite3.OPEN_READWRITE, (err) => {
+    if (err) {
+      console.error(err.message);
+    } else {
+      console.log('Connected to the database.');
+    }
+  });
+  // 데이터베이스에 데이터를 추가
+  const caseClauses = inputInfo.map(pair => `WHEN id = ${pair.id} THEN '${pair.contentSectionName}'`).join(' ');
+  const caseClauses2 = inputInfo.map(pair => `WHEN id = ${pair.id} THEN '${pair.contentSectionColor}'`).join(' ');
+  const sqlQuery = `UPDATE contentSection_Information_tbl SET contentSectionName = CASE ${caseClauses} END, contentSectionColor = CASE ${caseClauses2} END WHERE id IN (${contentSectionIdArray.join(', ')})`;
+  db.run(sqlQuery, (err) => {
+    if (err) {
+      console.error(err.message);
+    } else {
+      // 데이터베이스에 추가되면 manageContent 페이지로 이동
+      console.log('Query successfully executed. 컨텐츠 페이지 정보 수정 성공');
+      res.redirect('/admin/manageContentSection');
+    }
+  });
+  // 데이터베이스 연결 종료
+  db.close((err) => {
+    if (err) {
+      console.error(err.message);
+    } else {
+      console.log('Close the database connection.');
+    }
+  });
+});
+
+app.post('/api/section/delete', (req, res) => {
+  if (req.session.isLogin != true) {
+    console.log("로그인이 되어있지 않습니다.");
+    res.redirect('/admin/login');
+  }
+  // 이벤트가 발생한 폼 내부의 모든 체크박스에서 value 값을 가져옴
+  const checkboxes = req.body.idToDelete;
+  // 데이터베이스에 데이터를 삭제
+  let db = new sqlite3.Database('./database/Jabez_database.db', sqlite3.OPEN_READWRITE, (err) => {
+    if (err) {
+      console.error(err.message);
+    } else {
+      console.log('Connected to the database.');
+    }
+  });
+  // checkboxes에 담긴 id 값을 가진 데이터를 삭제
+  const placeholders = typeof checkboxes != "string" ? checkboxes.map((checkbox) => '?').join(',') : "?";
+  const sqlQuery = `DELETE FROM contentSection_Information_tbl WHERE ID IN (${placeholders})`;
+  db.run(sqlQuery, checkboxes, (err) => {
+    if (err) {
+      console.error(err.message);
+    } else {
+      // 데이터베이스에서 삭제되면 manageContent 페이지로 이동
+      console.log('Query successfully executed.');
+      console.log('Delete success : ', checkboxes);
+      res.redirect('/admin/manageContentSection');
+    }
+  });
+  // 데이터베이스 연결 종료
+  db.close((err) => {
+    if (err) {
+      console.error(err.message);
+    } else {
+      console.log('Close the database connection.');
+    }
+  });
+});
+
 // api/content/get/:contentSectionNum 요청이 들어오면 db에서 contentSectionNum에 해당하는 데이터를 조회한 뒤 첫번째 데이터를 전송
-app.get('/api/content/get/SectionNum/:id', (req, res) => {
-  const contentSectionNum = req.params.id;
+app.get('/api/content/get/SectionNum/:sectionId', (req, res) => {
+  const contentSectionNum = req.params.sectionId;
   let db = new sqlite3.Database('./database/Jabez_database.db', sqlite3.OPEN_READONLY, (err) => {
     if (err) {
       console.error(err.message);
@@ -231,6 +429,7 @@ app.get('/api/content/get/SectionNum/:id', (req, res) => {
     }
   });
 });
+
 
 
 // api/content/get/:id 요청이 들어오면 db에서 id부터 시작해서 최대 8개의 데이터를 가져와서 전송
@@ -262,6 +461,67 @@ app.get('/api/content/get/:id', (req, res) => {
   });
 });
 
+app.get('/api/content/get/section/:contentSectionId', (req, res) => {
+  const contentSectionId = req.params.contentSectionId;
+  let db = new sqlite3.Database('./database/Jabez_database.db', sqlite3.OPEN_READONLY, (err) => {
+    if (err) {
+      console.error(err.message);
+    } else {
+      console.log('Connected to the database. : ', `api/content/get/section/{contentSectionId}`);
+    }
+  });
+  // 데이터베이스에서 데이터를 가져옴
+  db.all(`SELECT m.id, m.MemberYoutubeTitle, m.MemberYoutubeLink, m.MemberYoutubeThumbnailLink, m.ContentSectionNum, cs.contentSectionName AS ContentSectionName FROM Member_Information_tbl as m INNER JOIN contentSection_Information_tbl as cs on m.ContentSectionNum = cs.id where m.ContentSectionNum=? LIMIT 16`, contentSectionId, (err, rows) => {
+    if (err) {
+      console.error(err.message);
+    } else {
+      console.log('rows : ', rows);
+      console.log('Query successfully executed.');
+
+      res.send(rows);
+    }
+  });
+  // 데이터베이스 연결 종료
+  db.close((err) => {
+    if (err) {
+      console.error(err.message);
+    } else {
+      console.log('Close the database connection.');
+    }
+  });
+});
+// sectionId와 id, count를 받아서 sectionId에 해당하는 데이터 중 id보다 큰 데이터를 최대 count만큼 가져옴
+app.get('/api/content/get/section/:contentSectionId/:id/:count', (req, res) => {
+  const contentSectionId = req.params.contentSectionId;
+  const id = req.params.id;
+  const count = req.params.count;
+  let db = new sqlite3.Database('./database/Jabez_database.db', sqlite3.OPEN_READONLY, (err) => {
+    if (err) {
+      console.error(err.message);
+    } else {
+      console.log('Connected to the database.');
+    }
+  });
+  // 데이터베이스에서 데이터를 가져옴
+  db.all(`SELECT m.id, m.MemberYoutubeTitle, m.MemberYoutubeLink, m.MemberYoutubeThumbnailLink, m.ContentSectionNum, cs.contentSectionName as ContentSectionName FROM Member_Information_tbl as m INNER JOIN contentSection_Information_tbl as cs on m.ContentSectionNum = cs.id WHERE m.ROWID>? AND m.ContentSectionNum=? ORDER BY m.ROWID LIMIT ?`,
+    [id, contentSectionId, count], (err, rows) => {
+      if (err) {
+        console.error(err.message);
+      } else {
+        console.log('조회한 데이터 : ', rows);
+        console.log('Query successfully executed.');
+        res.send(rows);
+      }
+    });
+  // 데이터베이스 연결 종료
+  db.close((err) => {
+    if (err) {
+      console.error(err.message);
+    } else {
+      console.log('Close the database connection.');
+    }
+  });
+});
 
 // client가 '/api/memberData/:id'로 접속하면 sqplite3로 연결한 뒤 데이터베이스에서 데이터를 가져와서 전송
 app.get('/api/content/get/:id/:count', (req, res) => {
@@ -275,8 +535,7 @@ app.get('/api/content/get/:id/:count', (req, res) => {
     }
   });
   // 데이터베이스에서 데이터를 가져옴
-  db.all(`SELECT * FROM Member_Information_tbl WHERE ROWID > ? 
-  AND ContentSectionNum = (SELECT ContentSectionNum FROM Member_Information_tbl WHERE ID = ?) ORDER BY ROWID LIMIT ?;`, [id,id,count], (err, rows) => {
+  db.all(`SELECT m.id, m.MemberYoutubeTitle, m.MemberYoutubeLink, m.MemberYoutubeThumbnailLink, m.ContentSectionNum, cs.contentSectionName as ContentSectionName FROM Member_Information_tbl as m INNER JOIN contentSection_Information_tbl as cs on m.ContentSectionNum = cs.id WHERE m.ROWID > ? ORDER BY m.ROWID LIMIT ?;`, [id, count], (err, rows) => {
     if (err) {
       console.error(err.message);
     } else {
@@ -294,9 +553,11 @@ app.get('/api/content/get/:id/:count', (req, res) => {
   });
 });
 
+
 // client가'/api/content/create'으로 post 요청하면 sqplite3로 연결한 뒤 데이터베이스에 데이터를 추가
 app.post('/api/content/create', (req, res) => {
   const source = req.body.youtubeSource;
+  const contentSectionNum = req.body.contentSectionName;
   if (req.session.isLogin != true) {
     console.log("로그인이 되어있지 않습니다.");
     res.redirect('/admin/login');
@@ -320,12 +581,55 @@ app.post('/api/content/create', (req, res) => {
     }
   });
   // youtubeTitle, embedUrl, thumbnailUrl 데이터를 Member_Information_tbl에 추가
-  const sqlQuery = `INSERT INTO Member_Information_tbl (MemberYoutubeTitle, MemberYoutubeLink, MemberYoutubeThumbnailLink) VALUES (?,?,?)`;
-  db.run(sqlQuery, [youtubeTitle, embedUrl, thumbnailUrl], (err) => {
+  const sqlQuery = `INSERT INTO Member_Information_tbl (MemberYoutubeTitle, MemberYoutubeLink, MemberYoutubeThumbnailLink, ContentSectionNum) VALUES (?,?,?,?)`;
+  db.run(sqlQuery, [youtubeTitle, embedUrl, thumbnailUrl, contentSectionNum], (err) => {
     if (err) {
       console.error(err.message);
     } else {
       // 데이터베이스에 추가되면 manageContent 페이지로 이동
+      console.log('Query successfully executed.');
+      res.redirect('/admin/manageContent');
+    }
+  });
+  // 데이터베이스 연결 종료
+  db.close((err) => {
+    if (err) {
+      console.error(err.message);
+    } else {
+      console.log('Close the database connection.');
+    }
+  });
+});
+
+// client가 '/api/content/update'으로 post 요청하면 sqplite3로 연결한 뒤 데이터베이스에서 데이터를 수정
+app.post('/api/content/update', (req, res) => {
+  if (req.session.isLogin != true) {
+    console.log("로그인이 되어있지 않습니다.");
+    res.redirect('/admin/login');
+  }
+  const contentSectionNums = req.body.contentSectionNum;
+  const ids = req.body.idToUpdate;
+  const inputInfo = [];
+  ids.forEach((id, index) => {
+    inputInfo.push({ id: id, contentSectionNum: contentSectionNums[index] });
+  });
+
+  // id을 key, contentSectionNum을 value로 하는 객체를 만듦
+  let db = new sqlite3.Database('./database/Jabez_database.db', sqlite3.OPEN_READWRITE, (err) => {
+    if (err) {
+      console.error(err.message);
+    } else {
+      console.log('Connected to the database.');
+    }
+  });
+  // 데이터베이스에서 데이터를 수정
+  const caseClauses = inputInfo.map(pair => `WHEN id = ${pair.id} THEN ${pair.contentSectionNum}`).join(' ');
+  const sqlQuery = `UPDATE Member_Information_tbl SET ContentSectionNum = CASE ${caseClauses} END WHERE id IN (${ids.join(', ')})`;
+  db.run(sqlQuery, (err) => {
+    if (err) {
+      console.error(err.message);
+    } else {
+      // 데이터베이스에 수정되면 manageContent 페이지로 이동
       console.log('Query successfully executed.');
       res.redirect('/admin/manageContent');
     }
@@ -357,7 +661,7 @@ app.post('/api/content/delete', (req, res) => {
     }
   });
   // checkboxes에 담긴 id 값을 가진 데이터를 삭제
-  const placeholders = checkboxes.map((checkbox) => '?').join(',')
+  const placeholders = typeof checkboxes != "string" ? checkboxes.map((checkbox) => '?').join(',') : "?";
   const sqlQuery = `DELETE FROM Member_Information_tbl WHERE ID IN (${placeholders})`;
   db.run(sqlQuery, checkboxes, (err) => {
     if (err) {
@@ -587,7 +891,10 @@ app.get('/api/visit/get', (req, res) => {
       console.error(err.message);
     } else {
       console.log('Query successfully executed.');
-      const todayVisits = rows[0].count;
+      let todayVisits = 0;
+      if (rows.length > 0) {
+        todayVisits = rows[0].count;
+      }
       // 총 방문자 수를 가져옴
       db.all('SELECT SUM(count) FROM visits_statistics_daily_tbl', (err, rows) => {
         if (err) {
