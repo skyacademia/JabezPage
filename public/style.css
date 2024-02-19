@@ -33,7 +33,115 @@ nav {
     opacity: 0;
 }
 #scroll-section-4 {
-    background-size: cover;
+    background-color: #CCDDFF;
+}
+#scroll-section-4 .prev-button {
+    position: absolute;
+    left : 50%;
+    transform: translateX(-50%);
+    top: 2rem;
+    z-index: 1000;
+    background-color: transparent;
+    border: none;
+}
+#scroll-section-4 .prev-button svg{
+    width: 3rem;
+    height: 3rem;    
+}
+#scroll-section-4 .prev-button svg.hide{
+    display: none;
+}
+
+#scroll-section-4 .next-button {
+    position: absolute;
+    right : 50%;
+    transform: translateX(50%);
+    bottom: 2rem;
+    z-index: 1000;
+    background-color: transparent;
+    border: none;
+}
+#scroll-section-4 .next-button svg{
+    width: 3rem;
+    height: 3rem;    
+}
+#scroll-section-4 .content{
+    transition: all 1.0s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+.calendar{
+    width: 100%;
+    transition: all 1.0s;
+}
+.calendar.show{
+    opacity: 1;
+    transform: scale(1);
+}
+.calendar.hide{
+    opacity: 0.5;
+    transform: scale(0.9);
+}
+.calendar-header .calendar-header-title{
+    font-size: 2rem;
+    font-weight: 700;
+    color: black;
+    text-align: center;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+}
+.calendar-week-day{
+    display: flex;
+    justify-content: space-between;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+}
+.calendar-week-day .day{
+    width: calc(100% / 7);
+    text-align: center;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: black;
+}
+.calendar-days{
+    display: grid;
+    grid-template-columns: 1fr;
+    background-color: white;
+    border-radius: 1rem;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+}
+.calendar-days .week{
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    border-bottom: rgb(216, 216, 216) 1px solid;
+}
+.calendar-days .week:last-child{
+    border-bottom: none;
+}
+.calendar-days .date{
+    height: 11vh;
+    color: black;
+    cursor: pointer;
+    border-right: rgb(216, 216, 216) 1px solid;
+    padding: 0.5rem;
+    display: flex;
+    flex-direction: column;
+}
+.calendar-days .date .date-reservation-list{
+    list-style-type: none;
+    padding: 0;
+    
+}
+.calendar-days .date:last-child{
+    border-right: none;
+}
+.calendar-days .date:hover{
+    background-color: rgba(255, 255, 255, 0.1);
+}
+.calendar-days .date.today{
+    background-color: rgba(255, 235, 205,0.5)
 }
 
 .card-default-setting {
@@ -169,6 +277,11 @@ section[id*=scroll-section][data-contentSectionId] .content-area h2.show svg {
     transition: all 0.5s;
     border: none;
 }
+#reservationModal .modal-content{
+    background-color: white;
+    border-radius: 1rem;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+}
 
 
 /* 카드 hover했을 때 카드 전체가 hover 되기 위해 아래와 같은 설정 필요 */
@@ -227,6 +340,9 @@ section[id*=scroll-section][data-contentSectionId] .content-area h2.show svg {
     right: 5%;
     transform: translateY(50%);
     z-index: 1000;
+}
+.contentListNavigator .list-group{
+    background-color: rgba(0, 0, 0, 0.5);
 }
 .contentListNavigator .list-group-item-action{
     width: 7rem;
