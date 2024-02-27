@@ -1,4 +1,3 @@
-
 const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent); // 안드로이드 아이폰을 검사해 체크
 class SectionInfoManager {
     constructor() {
@@ -175,6 +174,1079 @@ class InfiniteScrollManager {
         return Object.values(this.sections).map((section) => section.getSectionObj());
     }
 }
+
+
+class CalendarManager {
+    constructor() {
+        this.calendar = {};
+        this.calendarArea = document.querySelector('#scroll-section-4 .content');
+        this.calendarArray = ['prev', 'today', 'next'];
+        this.calendarIndex = 1;
+    }
+    addCalendar(type) {
+        this.calendar[type] = new Calendar(type);
+    }
+    getCalendar(type) {
+        return this.calendar[type];
+    }
+    getCalendars() {
+        return this.calendar;
+    }
+    addIndex() {
+        this.calendarIndex++;
+        if (this.calendarIndex > 2) {
+            this.calendarIndex = 2;
+        }
+    }
+    minusIndex() {
+        this.calendarIndex--;
+        if (this.calendarIndex < 0) {
+            this.calendarIndex = 0;
+        }
+    }
+    getCalendarIndex() {
+        return this.calendarIndex;
+    }
+    scrollUpCalendar() {
+        this.minusIndex();
+        const calendarWidth = document.querySelector('#scroll-section-4 .today-calendar').offsetWidth;
+        this.calendarArea.style.transform = `translateX(${calendarWidth * ((this.calendarIndex * -1) + 1)}px)`;
+        this.calendarArray.forEach((type) => {
+            if (this.calendarArray.indexOf(type) == this.calendarIndex) {
+                handleClassList(this.calendar[type].getCalendar(), 'show', 'hide')
+            } else {
+                handleClassList(this.calendar[type].getCalendar(), 'hide', 'show')
+            }
+        });
+    }
+    scrollDownCalendar() {
+        this.addIndex();
+        const calendarWidth = document.querySelector('#scroll-section-4 .today-calendar').offsetWidth;
+        this.calendarArea.style.transform = `translateX(${calendarWidth * ((this.calendarIndex * -1) + 1)}px)`;
+        this.calendarArray.forEach((type) => {
+            if (this.calendarArray.indexOf(type) == this.calendarIndex) {
+                handleClassList(this.calendar[type].getCalendar(), 'show', 'hide')
+            } else {
+                handleClassList(this.calendar[type].getCalendar(), 'hide', 'show')
+            }
+        });
+    }
+    getCalendarReservationInfo(date) {
+        return this.calendar[this.calendarArray[this.calendarIndex]].getCalendarReservationInfo(date);
+    }
+    getCalendarReservationInfoByDate(date) {
+        // date는 'yyyy-mm-dd'형식
+        const dateArray = date.split('-');
+        const year = parseInt(dateArray[0]);
+        const month = parseInt(dateArray[1]);
+        const day = parseInt(dateArray[2]);
+        const today = new Date();
+
+        // 이전 달이면 prev, 다음 달이면 next, 현재 달이면 today의 calendar에서 찾아서 반환
+        if (year < today.getFullYear() || (year === today.getFullYear() && month < today.getMonth() + 1)) {
+            return this.calendar['prev'].getCalendarReservationInfo(day);
+        } else if (year > today.getFullYear() || (year === today.getFullYear() && month > today.getMonth() + 1)) {
+            return this.calendar['next'].getCalendarReservationInfo(day);
+        } else {
+            return this.calendar['today'].getCalendarReservationInfo(day);
+        }
+    }
+    getCalendarDate() {
+        return this.calendar[this.calendarArray[this.calendarIndex]].getCalendarDate();
+    }
+    deleteCalendar() {
+        for (let type in this.calendar) {
+            this.calendar[type].deleteCalendar();
+        }
+    }
+    setupCalendar() {
+        for (let type in this.calendar) {
+            this.calendar[type].setupCalendar();
+        }
+    }
+}
+
+class Calendar {
+    constructor(type) {
+        this.calendar = document.querySelector(`.calendar.${type}-calendar`);
+        this.days = this.calendar.querySelector('.calendar-days');
+        this.weeks = this.calendar.querySelectorAll('.week');
+        this.date = new Date(); // 현재 날짜
+        if (type === 'prev') {
+            this.date.setDate(1); // 이전 달이 31일이 없는 경우 1일로 설정(오류 방지)
+            this.date.setMonth(this.date.getMonth() - 1); // 이전 달로 설정
+        } else if (type === 'next') {
+            this.date.setDate(1); // 다음 달이 31일이 없는 경우 1일로 설정(오류 방지)
+            this.date.setMonth(this.date.getMonth() + 1); // 다음 달로 설정
+        }
+        this.lastDate = new Date(this.date.getFullYear(), this.date.getMonth() + 1, 0); // 현재 달의 마지막 날
+        this.firstDate = new Date(this.date.getFullYear(), this.date.getMonth(), 1); // 현재 달의 첫 날
+        this.lastDay = this.lastDate.getDate(); // 마지막 날의 일자
+        this.firstDay = this.firstDate.getDay(); // 첫 날의 요일
+        this.day = 1; // 날짜
+        this.dayReservation = {};
+        this.setupCalendar();
+    }
+    setupCalendar() {
+        this.setDefaultDayReservation();
+        this.setCalendarReservation().then(() => {
+            this.createYearMonth(this.date.getFullYear(), this.date.getMonth() + 1, this.calendar);
+            this.createCalendar();
+            this.deleteBlackWeek();
+            this.markDate();
+        });
+    }
+
+    createYearMonth(year, month, calendar) {
+        const yearArea = calendar.querySelector('.calendar-header-title-year');
+        const monthArea = calendar.querySelector('.calendar-header-title-month');
+        yearArea.textContent = `${year}. `;
+        monthArea.textContent = month;
+    }
+    resetDay() {
+        this.day = 1;
+    }
+    createCalendar() {
+        const weeks = this.calendar.querySelectorAll('.week');
+        if (this.day != 1) { this.resetDay(); }
+        for (let i = 0; i < weeks.length; i++) {
+            const week = weeks[i];
+            for (let j = 0; j < 7; j++) {
+                const date = createElement('div', { classList: ['date'], "data-date": `${this.day}`, 'data-bs-toggle': 'modal', 'data-bs-target': '#reservationModal', 'data-bs-date': `${this.day}` });
+                const span = createElement('span', { classList: ['date-text'] });
+                const dayReservation = createElement('div', { classList: ['date-reservation'] });
+                const dayReservationList = createElement('ul', { classList: ['date-reservation-list'] });
+                if ((i === 0 && j < this.firstDay) || this.day > this.lastDay) {
+                    date.textContent = '';
+                    date.classList.add('empty');
+                    date.removeAttribute('data-date');
+                    date.removeAttribute('data-bs-toggle');
+                    date.removeAttribute('data-bs-target');
+                    date.removeAttribute('data-bs-date');
+                } else {
+                    span.textContent = `${this.day}`;
+                    date.appendChild(span);
+                    if (this.dayReservation[this.day].length > 0) {
+                        this.dayReservation[this.day].forEach((reservation) => {
+                            const reservationInfo = createElement('li', { classList: ['date-reservation-info'] },
+                                [isMobile?
+                                     `${reservation.activity}`:`${reservation.startDateTime.split(' ')[1].split(':')[0]}:${reservation.startDateTime.split(' ')[1].split(':')[1]}~${reservation.endDateTime.split(' ')[1].split(':')[0]}:${reservation.endDateTime.split(' ')[1].split(':')[1]} ${reservation.activity}`]);
+                            if (isMobile) { reservationInfo.style.height = '1rem'; }
+                            dayReservationList.appendChild(reservationInfo);
+                        });
+                        dayReservation.appendChild(dayReservationList);
+                        date.appendChild(dayReservation);
+                    }
+                    this.day++;
+                }
+                week.appendChild(date);
+            }
+        }
+    }
+    setDefaultDayReservation() {
+        for (let i = 1; i <= this.lastDay; i++) {
+            this.dayReservation[i] = [];
+        }
+    }
+    markDate() {
+        const today = new Date();
+        if (this.date.getFullYear() === today.getFullYear() && this.date.getMonth() === today.getMonth() && this.date.getDate() === today.getDate()) {
+            this.weeks.forEach((week) => {
+                week.querySelectorAll('.date').forEach((date) => {
+                    if (date.getAttribute('data-date') === today.getDate().toString()) {
+                        date.classList.add('today');
+                    } else if (this.date.getMonth() <= today.getMonth() && parseInt(date.getAttribute('data-date')) < today.getDate() && date.getAttribute !== null && date.getAttribute('data-date') !== '') {
+                        date.classList.add('past');
+                    }
+                });
+            });
+        } else if (this.date.getFullYear() <= today.getFullYear() && this.date.getMonth() < today.getMonth()) {
+            this.weeks.forEach((week) => {
+                week.querySelectorAll('.date').forEach((date) => {
+                    if (date.getAttribute('data-date') !== null && date.getAttribute('data-date') !== '') {
+                        date.classList.add('past');
+                    }
+                });
+            });
+        }
+    }
+    deleteBlackWeek() {
+        const lastWeek = this.days.querySelector('.week:last-child')
+        if (lastWeek.querySelector('.date:first-child').textContent === '') {
+            lastWeek.remove();
+        }
+    }
+
+    getCalendar() {
+        return this.calendar;
+    }
+
+    async setCalendarReservation() {
+        const thisYear = this.date.getFullYear();
+        const thisMonth = this.date.getMonth() + 1 < 10 ? `0${this.date.getMonth() + 1}` : this.date.getMonth() + 1;
+        const json = await fetchData(`/api/reservation/get/${thisYear}/${thisMonth}`);
+        json.forEach((data) => {
+            const startDateTime = data.startDateTime;
+            const day = startDateTime.split(' ')[0].split('-')[2];
+            const reservationInfo = { id: data.id, startDateTime: startDateTime, endDateTime: data.endDateTime, activity: data.activity, reservationPerson: data.reservationPerson };
+            this.dayReservation[day].push(reservationInfo);
+        });
+    }
+
+
+    getCalendarReservationInfo(date) {
+        return this.dayReservation[date];
+    }
+    getCalendarDate() {
+        return { year: this.date.getFullYear(), month: this.date.getMonth() + 1 };
+    }
+
+    deleteCalendar() {
+        this.calendar.querySelectorAll('.week').forEach((week) => {
+            week.replaceChildren();
+        });
+    }
+}
+class CalendarModalManager {
+    constructor() {
+        this.date = null;
+        this.isPast = false;
+        this.reservationInfo = [];
+        this.selectedReservationTime = new Set();
+        this.reservationArea = document.getElementById('reservationModal').querySelector('.reservation-area');
+        this.getSelectedReservationTime = this.getSelectedReservationTime.bind(this);
+        this.getReservationDate = this.getReservationDate.bind(this);
+    }
+    setReservationInfo(reservationInfo) {
+        this.reservationInfo = reservationInfo;
+    }
+    getReservationInfo() {
+        return this.reservationInfo;
+    }
+    setReservationDate(date) {
+        this.date = date;
+    }
+    getReservationDate() {
+        return this.date;
+    }
+    setIsPast(isPast) {
+        this.isPast = isPast;
+    }
+    getIsPast() {
+        return this.isPast;
+    }
+    findIsPast(date) {
+        const today = new Date();
+        const _date = { ...date };
+        if (_date.year === today.getFullYear() && _date.month === today.getMonth() + 1 && _date.date === today.getDate()) {
+            return false;
+        } else if (_date.year <= today.getFullYear() && _date.month < today.getMonth() + 1) {
+            return true;
+        } else if (_date.year <= today.getFullYear() && _date.month === today.getMonth() + 1 && _date.date < today.getDate()) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+    resetReservationData() {
+        this.date = null;
+        this.reservationInfo = [];
+        this.selectedReservationTime = new Set();
+    }
+    setReservationAreaEvent(reservationArea) {
+        const reservations = reservationArea.querySelectorAll('div[class*="reservation"]');
+        reservations.forEach((reservation) => {
+            reservation.addEventListener('click', (e) => {
+                const target = e.target;
+                if (target.classList.contains('reserved')) {
+                    return;
+                }
+                if (this.getIsPast()) {
+                    alert('금일 지난 날짜는 예약할 수 없습니다.');
+                    return;
+                }
+
+                target.classList.toggle('selected');
+
+                if (target.classList.contains('selected')) {
+                    this.selectedReservationTime.add(target.dataset.number);
+                } else {
+                    this.selectedReservationTime.delete(target.dataset.number);
+                }
+            });
+        });
+    }
+
+    findSelectedRange(reservations, reservationIndex) {
+        const startNumber = Array.from(reservations).filter((reservation) => reservation.classList.contains('selected'))[0].dataset.number;
+        const endNumber = reservationIndex;
+        return { start: startNumber, end: endNumber };
+    }
+
+    calculateTime(selectedRange) {
+        // 정수는 시간, 소수는 분으로 계산(0.5 = 30분)
+        const startTime = 9; // Start time in hours
+        const timeInterval = 0.5; // Time interval in hours
+        const timeSlots = 24; // Total number of time slots
+
+        const selectedStartTime = startTime + (selectedRange.start - 1) * timeInterval;
+        const selectedEndTime = startTime + selectedRange.end * timeInterval;
+        return {
+            startTime: selectedStartTime,
+            endTime: selectedEndTime
+        };
+    }
+    getSelectedReservationTime() {
+        return Array.from(this.selectedReservationTime).sort((a, b) => a - b);
+    }
+
+    createTimeTable() {
+        const modalHeader = createElement('div', { classList: ['modal-header'], style: 'width: 100%' });
+        const modalTitle = createElement('h1', { classList: ['modal-title', 'fs-5'], id: 'reservationModalLabel' });
+        const closeButton = createElement('button', { classList: ['btn-close'], 'data-bs-dismiss': 'modal', 'aria-label': 'Close' });
+        modalHeader.appendChild(modalTitle);
+        modalHeader.appendChild(closeButton);
+
+        const modalBody = createElement('div', { classList: ['modal-body'], style: 'width: 100%' });
+        const timeTableDiv = createElement('div', { classList: ['time-table', 'row', 'container'] });
+        const timesAreaDiv = createElement('div', { classList: ['times-area', 'col-3'] });
+        const reservationAreaDiv = createElement('div', { classList: ['reservation-area', 'col-9', 'position-relative'] });
+        for (let i = 9; i <= 21; i++) {
+            const timeDiv = createElement('div', { classList: ['time'] }, [i < 10 ? `0${i}:00` : `${i}:00`]);
+            timesAreaDiv.appendChild(timeDiv);
+        }
+        for (let i = 1; i <= 12; i++) {
+            if (i % 2 === 0) {
+                const reservationDivisionDiv = createElement('div', { classList: ['reservation-division'], 'data-number': `${i}` });
+                reservationAreaDiv.appendChild(reservationDivisionDiv);
+            } else {
+                const reservationDiv = createElement('div', { classList: ['reservation'], 'data-number': `${i}` });
+                if (i === 1) {
+                    reservationDiv.classList.add('border-top');
+                }
+                reservationAreaDiv.appendChild(reservationDiv);
+            }
+        }
+        this.setReservationAreaEvent(reservationAreaDiv); // 이벤트 추가
+        timeTableDiv.appendChild(timesAreaDiv);
+        timeTableDiv.appendChild(reservationAreaDiv);
+        modalBody.appendChild(timeTableDiv);
+
+        const modalFooter = createElement('div', { classList: ['modal-footer'] });
+        const cancelButton = createElement('button', { classList: ['btn', 'btn-secondary'], 'data-bs-dismiss': 'modal', type: 'button' }, ['취소']);
+        const reservationButton = createElement('button', { classList: ['btn', 'btn-primary', 'reservationButton'], type: 'button' }, ['예약하기']);
+
+        modalFooter.appendChild(cancelButton);
+        modalFooter.appendChild(reservationButton);
+
+        return [modalHeader, modalBody, modalFooter];
+    }
+    createReservationForm() {
+        const _this = this; // this를 _this로 저장
+        // modal-header 생성
+        const modalHeader = createElement('div', { classList: ['modal-header'], style: 'width: 100%' });
+        const modalTitle = createElement('h1', { classList: ['modal-title', 'fs-5'], id: 'reservationModalLabel' }, ['공간 예약 신청']);
+        const closeButton = createElement('button', { classList: ['btn-close'], 'data-bs-dismiss': 'modal', 'aria-label': 'Close' });
+        modalHeader.appendChild(modalTitle);
+        modalHeader.appendChild(closeButton);
+
+        // modal-body 생성
+        const modalBody = createElement('div', { classList: ['modal-body'], style: 'width: 100%' });
+        const reservationForm = createElement('form', { action: '/api/reservation/create', method: 'post', id: 'reservationForm' });
+
+        const dateInput = createElement('input', { id: 'dateInput', type: 'hidden', name: 'reservationDate', value: '' });
+
+        const activityDiv = createElement('div', { classList: ['mb-3'] });
+        const activityLabel = createElement('label', { for: 'activityInput', classList: ['form-label'] }, ['활동명']);
+        const activityInput = createElement('input', { type: 'text', classList: ['form-control'], id: 'activityInput', name: 'activity', placeholder: '공간에서 하실 활동을 입력해주세요' });
+        activityDiv.appendChild(activityLabel);
+        activityDiv.appendChild(activityInput);
+
+        const timeSelectDiv = createElement('div', { classList: ['row', 'mb-3'] });
+
+        const startTimeDiv = createElement('div', { classList: ['col'] });
+        const startTimeLabel = createElement('label', { for: 'startTimeSelect', classList: ['form-label'] }, ['시작 시간']);
+        const startTimeSelect = createElement('select', { id: 'startTimeSelect', name: 'startTime', classList: ['form-select'], 'aria-label': 'Start time' });
+        for (let i = 9; i <= 20; i++) {
+            const option = createElement('option', { value: i < 10 ? `0${i}:00` : `${i}:00` }, [i < 10 ? `0${i}:00` : `${i}:00`]);
+            startTimeSelect.appendChild(option);
+        }
+        startTimeDiv.appendChild(startTimeLabel);
+        startTimeDiv.appendChild(startTimeSelect);
+
+        const endTimeDiv = createElement('div', { classList: ['col'] });
+        const endTimeLabel = createElement('label', { for: 'endTimeSelect', classList: ['form-label'] }, ['종료 시간']);
+        const endTimeSelect = createElement('select', { id: 'endTimeSelect', name: 'endTime', classList: ['form-select'], 'aria-label': 'End time' });
+        for (let i = 10; i <= 21; i++) {
+            const option = createElement('option', { value: i < 10 ? `0${i}:00` : `${i}:00` }, [i < 10 ? `0${i}:00` : `${i}:00`]);
+            endTimeSelect.appendChild(option);
+        }
+        endTimeDiv.appendChild(endTimeLabel);
+        endTimeDiv.appendChild(endTimeSelect);
+
+        timeSelectDiv.appendChild(startTimeDiv);
+        timeSelectDiv.appendChild(endTimeDiv);
+
+        const nameDiv = createElement('div', { classList: ['mb-3'] });
+        const nameLabel = createElement('label', { for: 'nameInput', classList: ['form-label'] }, ['예약자']);
+        const nameInput = createElement('input', { id: 'nameInput', type: 'text', name: 'name', classList: ['form-control'], placeholder: '성함을 입력해주세요' });
+        nameDiv.appendChild(nameLabel);
+        nameDiv.appendChild(nameInput);
+
+        const passwordDiv = createElement('div', { classList: ['mb-3'] });
+        const passwordLabel = createElement('label', { for: 'passwordInput', classList: ['form-label'] }, ['비밀번호']);
+        const passwordInput = createElement('input', { id: 'passwordInput', type: 'password', name: 'password', classList: ['form-control'], placeholder: '비밀번호 4자리 입력해주세요' });
+        passwordDiv.appendChild(passwordLabel);
+        passwordDiv.appendChild(passwordInput);
+
+        reservationForm.appendChild(dateInput);
+        reservationForm.appendChild(activityDiv);
+        reservationForm.appendChild(timeSelectDiv);
+        reservationForm.appendChild(nameDiv);
+        reservationForm.appendChild(passwordDiv);
+        setReservatationFormFill(reservationForm);
+        setReservationFormSubmit(reservationForm);
+        modalBody.appendChild(reservationForm);
+
+        // modal-footer 생성
+        const modalFooter = createElement('div', { classList: ['modal-footer'] });
+        const cancelButton = createElement('button', { classList: ['btn', 'btn-secondary'], 'data-bs-dismiss': 'modal', type: 'button' }, ['취소']);
+        const reservationButton = createElement('button', { classList: ['btn', 'btn-primary'], type: 'submit', form: 'reservationForm' }, ['예약하기']);
+
+        modalFooter.appendChild(cancelButton);
+        modalFooter.appendChild(reservationButton);
+
+
+        function setReservatationFormFill(form) {
+            const startSelect = form.querySelector('#startTimeSelect');
+            const endSelect = form.querySelector('#endTimeSelect');
+            const reservationDate = form.querySelector('#dateInput');
+
+            const selectedReservationTime = _this.getSelectedReservationTime();
+            const dateData = _this.getReservationDate();
+
+            dateData.month = dateData.month < 10 ? `0${dateData.month}` : dateData.month;
+            const formattedReservationDate = `${dateData.year}-${dateData.month}-${parseInt(dateData.date)}`;
+
+            const startTimeNumber = parseInt(selectedReservationTime[0]);
+            const endTimeNumber = parseInt(selectedReservationTime[selectedReservationTime.length - 1]) + 1;
+
+            const formattedStartTime = startTimeNumber + 8 < 10 ? `0${startTimeNumber + 8}:00` : `${startTimeNumber + 8}:00`;
+            const formattedEndTime = endTimeNumber + 8 < 10 ? `0${endTimeNumber + 8}:00` : `${endTimeNumber + 8}:00`;
+
+            reservationDate.value = formattedReservationDate;
+            startSelect.querySelector(`option[value="${formattedStartTime}"]`).selected = true;
+            endSelect.querySelector(`option[value="${formattedEndTime}"]`).selected = true;
+        }
+        function setReservationFormSubmit(form) {
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const form = e.target;
+                const formData = new FormData(form);
+                const reservationDate = formData.get('reservationDate');
+                const startTime = formData.get('startTime');
+                const endTime = formData.get('endTime');
+                const password = formData.get('password');
+                const reservationPerson = formData.get('name');
+                const activity = formData.get('activity');
+
+                if (password.length === 0) {
+                    alert('비밀번호를 입력해주세요.');
+                    return;
+                } else if (password.length < 4) {
+                    alert('비밀번호가 4자리 미만입니다. 비밀번호를 4자리로 입력해주세요.');
+                    return;
+                } else if (password.length > 4) {
+                    alert('비밀번호가 4자리 초과입니다. 비밀번호를 4자리로 입력해주세요.');
+                    return;
+                } else if (password.match(/[^0-9]/)) {
+                    alert('비밀번호는 숫자로만 입력해주세요.');
+                    return;
+                }
+
+                if (activity.length === 0) {
+                    alert('활동 내용을 입력해주세요.');
+                    return;
+                } else if (activity.startsWith(' ') || activity.endsWith(' ')) {
+                    alert('활동 내용 처음과 마지막에 공백을 입력할 수 없습니다.');
+                    return;
+                }
+                else if (activity.match(/^\d/)) {
+                    alert('활동 내용은 숫자로 시작할 수 없습니다.');
+                    return;
+                }
+                else if (activity.match(/[^ㄱ-ㅎ|가-힣|a-z|A-Z|0-9|\s]/)) {
+                    alert('활동 내용에 특수문자를 입력할 수 없습니다.');
+                    return;
+                }
+
+
+                if (reservationPerson.length === 0) {
+                    alert('예약자명을 입력해주세요.');
+                    return;
+                } else if (reservationPerson.startsWith(' ') || reservationPerson.endsWith(' ')) {
+                    alert('예약자명 처음과 마지막에 공백을 입력할 수 없습니다.');
+                    return;
+                }
+                else if (reservationPerson.match(/^\d/)) {
+                    alert('예약자명은 숫자로 시작할 수 없습니다.');
+                    return;
+                }
+                else if (reservationPerson.match(/[^ㄱ-ㅎ|가-힣|a-z|A-Z|0-9|\s]/)) {
+                    alert('예약자명에 특수문자를 입력할 수 없습니다.');
+                    return;
+                }
+
+
+                if (parseInt(startTime.split(':')[0]) === parseInt(endTime.split(':')[0])) {
+                    alert('시작 시간과 종료 시간이 같습니다.');
+                    return;
+                } else if (parseInt(startTime.split(':')[0]) > parseInt(endTime.split(':')[0])) {
+                    alert('종료 시간이 시작 시간보다 빠릅니다.');
+                    return;
+                }
+
+                if (_this.checkReservationTimeForCreate(reservationDate, startTime, endTime)) {
+                    alert('예약이 불가능한 시간입니다. 시간을 다시 한 번 확인해주세요.');
+                    return;
+                }
+
+                const reservationInfo = {
+                    reservationDate: reservationDate,
+                    startTime: startTime,
+                    endTime: endTime,
+                    activity: activity,
+                    reservationPerson: reservationPerson,
+                    password: password
+                };
+                const response = await fetch('/api/reservation/create', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(reservationInfo),
+                });
+                // response의 success 여부에 따라 alert창을 띄워준다.
+                if (response) {
+                    response.json().then((data) => {
+                        if (data.success) {
+                            alert('예약이 완료되었습니다.');
+                            bootstrap.Modal.getInstance(document.getElementById('reservationModal')).hide();
+                            calendarManager.deleteCalendar();
+                            calendarManager.setupCalendar();
+                        } else {
+                            alert('예약에 실패했습니다.');
+                        }
+                    });
+                }
+            });
+        }
+
+
+        return [modalHeader, modalBody, modalFooter];
+    }
+    createReservationAuthForm(id) {
+        const _this = this;
+        const modalHeader = createElement('div', { classList: ['modal-header'], style: 'width: 100%' });
+        const modalTitle = createElement('h1', { classList: ['modal-title', 'fs-5'], id: 'reservationModalLabel' }, ['예약 확인']);
+        const closeButton = createElement('button', { classList: ['btn-close'], 'data-bs-dismiss': 'modal', 'aria-label': 'Close' });
+        modalHeader.appendChild(modalTitle);
+        modalHeader.appendChild(closeButton);
+
+        const modalBody = createElement('div', { classList: ['modal-body'], style: 'width: 100%' });
+        const reservationAuthForm = createElement('form', { action: '/api/reservation/auth', method: 'post', id: 'reservationAuthForm', 'data-reservationId': `${id}` });
+
+        const passwordDiv = createElement('div', { classList: ['row'] });
+        const passwordLabel = createElement('label', { for: 'reservationAuthPassword', classList: ['form-label', 'col-sm-2', 'col-form-label'] }, ['비밀번호']);
+        const passwordInputDiv = createElement('div', { classList: ['col-sm-10'] });
+        const passwordInput = createElement('input', { id: 'reservationAuthPassword', type: 'password', name: 'password', classList: ['form-control'], placeholder: '비밀번호 4자리 입력해주세요' });
+        passwordInputDiv.appendChild(passwordInput);
+        passwordDiv.appendChild(passwordLabel);
+        passwordDiv.appendChild(passwordInputDiv);
+
+        reservationAuthForm.appendChild(passwordDiv);
+        setReservationAuthFormSubmit(reservationAuthForm);
+        modalBody.appendChild(reservationAuthForm);
+
+        const modalFooter = createElement('div', { classList: ['modal-footer'] });
+        const cancelButton = createElement('button', { classList: ['btn', 'btn-secondary'], 'data-bs-dismiss': 'modal', type: 'button' }, ['취소']);
+        const reservationButton = createElement('button', { classList: ['btn', 'btn-primary'], type: 'submit', form: 'reservationAuthForm' }, ['확인']);
+
+        modalFooter.appendChild(cancelButton);
+        modalFooter.appendChild(reservationButton);
+
+        function setReservationAuthFormSubmit(form) {
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const form = e.target;
+                const reservationId = form.getAttribute('data-reservationId');
+                const password = form.querySelector('#reservationAuthPassword').value;
+                if (password.length === 0) {
+                    alert('비밀번호가 비어있습니다. 비밀번호를 입력해주세요.');
+                    return;
+                } else if (password.length < 4) {
+                    alert('비밀번호가 4자리 미만입니다. 비밀번호를 4자리로 입력해주세요.');
+                    return;
+                } else if (password.length > 4) {
+                    alert('비밀번호가 4자리 초과입니다. 비밀번호를 4자리로 입력해주세요.');
+                    return;
+                } else if (password.match(/[^0-9]/)) {
+                    alert('숫자 이외의 문자가 들어가 있습니다. 비밀번호는 숫자로만 입력해주세요.');
+                    return;
+                }
+                const response = await fetch('/api/reservation/auth', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ reservationId: reservationId, password: password }),
+                });
+                if (response) {
+                    response.json().then((data) => {
+                        if (data.success) {
+                            alert('인증되었습니다.');
+                            document.getElementById('reservationModal').querySelector('.modal-content').replaceChildren(..._this.createReservationChangeForm(reservationId));
+                        } else {
+                            alert('비밀번호가 일치하지 않습니다. 다시 입력해주세요.');
+                        }
+                    });
+                }
+            });
+        }
+        return [modalHeader, modalBody, modalFooter];
+    }
+    createReservationChangeForm(reservationId) {
+        const _this = this;
+        const reservationInfo = this.getReservationInfo().find((reservation) => reservation.id === parseInt(reservationId));
+        const modalHeader = createElement('div', { classList: ['modal-header'], style: 'width: 100%' });
+        const modalTitle = createElement('h1', { classList: ['modal-title', 'fs-5'], id: 'reservationChangeModalLabel' }, ['예약 변경']);
+        const closeButton = createElement('button', { classList: ['btn-close'], 'data-bs-dismiss': 'modal', 'aria-label': 'Close' });
+        modalHeader.appendChild(modalTitle);
+        modalHeader.appendChild(closeButton);
+
+        const modalBody = createElement('div', { classList: ['modal-body'], style: 'width: 100%' });
+        const reservationChangeForm = createElement('form', { action: '/api/reservation/update', method: 'post', id: 'reservationChangeForm', 'data-reservationId': reservationId });
+
+        const date = new Date();
+        const formattedDate = `${date.getFullYear()}-${date.getMonth() + 1 < 10 ? `0${date.getMonth() + 1}` : date.getMonth() + 1}-${date.getDate() < 10 ? `0${date.getDate()}` : date.getDate()}`;
+        const nextMonthDate = new Date(date.getFullYear(), date.getMonth() + 2, 0);
+        const formattedNextMonthDate = `${nextMonthDate.getFullYear()}-${nextMonthDate.getMonth() + 1 < 10 ? `0${nextMonthDate.getMonth() + 1}` : nextMonthDate.getMonth() + 1}-${nextMonthDate.getDate() < 10 ? `0${nextMonthDate.getDate()}` : nextMonthDate.getDate()}`;
+
+        const dateDiv = createElement('div', { classList: ['mb-3'] });
+        const dateLabel = createElement('label', { for: 'modifiedDateInput', classList: ['form-label'] }, ['날짜']);
+        const dateInput = createElement('input', { classList: ['form-control'], id: 'modifiedDateInput', type: 'date', name: 'reservationDate', value: `${reservationInfo.startDateTime.split(' ')[0]}`, min: `${formattedDate}`, max: `${formattedNextMonthDate}` });
+        dateDiv.appendChild(dateLabel);
+        dateDiv.appendChild(dateInput);
+
+        const activityDiv = createElement('div', { classList: ['mb-3'] });
+        const activityLabel = createElement('label', { for: 'modifiedActivityInput', classList: ['form-label'] }, ['활동명']);
+        const activityInput = createElement('input', { type: 'text', classList: ['form-control'], id: 'modifiedActivityInput', name: 'activity', placeholder: '공간에서 하실 활동을 입력해주세요' });
+        activityInput.value = reservationInfo.activity;
+        activityDiv.appendChild(activityLabel);
+        activityDiv.appendChild(activityInput);
+
+        const timeSelectDiv = createElement('div', { classList: ['row', 'mb-3'] });
+
+        const startTimeDiv = createElement('div', { classList: ['col'] });
+        const startTimeLabel = createElement('label', { for: 'modifiedStartTimeSelect', classList: ['form-label'] }, ['시작 시간']);
+        const startTimeSelect = createElement('select', { id: 'modifiedStartTimeSelect', name: 'startTime', classList: ['form-select'], 'aria-label': 'Start time' });
+        for (let i = 9; i <= 20; i++) {
+            const option = createElement('option', { value: i < 10 ? `0${i}:00` : `${i}:00` }, [i < 10 ? `0${i}:00` : `${i}:00`]);
+            startTimeSelect.appendChild(option);
+        }
+        startTimeSelect.querySelector(`option[value="${reservationInfo.startDateTime.split(' ')[1].split(':')[0]}:00"]`).selected = true;
+        startTimeDiv.appendChild(startTimeLabel);
+        startTimeDiv.appendChild(startTimeSelect);
+
+        const endTimeDiv = createElement('div', { classList: ['col'] });
+        const endTimeLabel = createElement('label', { for: 'modifiedEndTimeSelect', classList: ['form-label'] }, ['종료 시간']);
+        const endTimeSelect = createElement('select', { id: 'modifiedEndTimeSelect', name: 'endTime', classList: ['form-select'], 'aria-label': 'End time' });
+        for (let i = 10; i <= 21; i++) {
+            const option = createElement('option', { value: i < 10 ? `0${i}:00` : `${i}:00` }, [i < 10 ? `0${i}:00` : `${i}:00`]);
+            endTimeSelect.appendChild(option);
+        }
+        endTimeSelect.querySelector(`option[value="${reservationInfo.endDateTime.split(' ')[1].split(':')[0]}:00"]`).selected = true;
+        endTimeDiv.appendChild(endTimeLabel);
+        endTimeDiv.appendChild(endTimeSelect);
+
+        timeSelectDiv.appendChild(startTimeDiv);
+        timeSelectDiv.appendChild(endTimeDiv);
+
+        const nameDiv = createElement('div', { classList: ['mb-3'] });
+        const nameLabel = createElement('label', { for: 'modifiedNameInput', classList: ['form-label'] }, ['예약자']);
+        const nameInput = createElement('input', { id: 'modifiedNameInput', type: 'text', name: 'name', classList: ['form-control'], placeholder: '성함을 입력해주세요' });
+        nameInput.value = reservationInfo.reservationPerson;
+
+        nameDiv.appendChild(nameLabel);
+        nameDiv.appendChild(nameInput);
+
+        const passwordDiv = createElement('div', { classList: ['mb-3'] });
+        const passwordLabel = createElement('label', { for: 'modifiedPasswordInput', classList: ['form-label'] }, ['비밀번호']);
+        const passwordInput = createElement('input', { id: 'modifiedPasswordInput', type: 'password', name: 'password', classList: ['form-control'], placeholder: '비밀번호 4자리 입력해주세요' });
+
+        passwordDiv.appendChild(passwordLabel);
+        passwordDiv.appendChild(passwordInput);
+
+        reservationChangeForm.appendChild(dateDiv);
+        reservationChangeForm.appendChild(activityDiv);
+        reservationChangeForm.appendChild(timeSelectDiv);
+        reservationChangeForm.appendChild(nameDiv);
+        reservationChangeForm.appendChild(passwordDiv);
+        setReservationChangeFormUpdateSubmit(reservationChangeForm, reservationInfo);
+        modalBody.appendChild(reservationChangeForm);
+
+        const modalFooter = createElement('div', { classList: ['modal-footer'] });
+        const cancelButton = createElement('button', { classList: ['btn', 'btn-secondary'], 'data-bs-dismiss': 'modal', type: 'button' }, ['취소']);
+        const reservationButton = createElement('button', { classList: ['btn', 'btn-primary'], type: 'submit', form: 'reservationChangeForm' }, ['변경하기']);
+        const deleteButton = createElement('button', { classList: ['btn', 'btn-danger'], type: 'button', id: 'deleteReservationButton' }, ['삭제하기']);
+
+        setReservationDeleteButtonEvent(deleteButton, reservationId);
+        modalFooter.appendChild(cancelButton);
+        modalFooter.appendChild(reservationButton);
+        modalFooter.appendChild(deleteButton);
+
+        function setReservationChangeFormUpdateSubmit(form, reservationInfo) {
+            const localReservationInfo = reservationInfo;
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const form = e.target;
+                const formData = new FormData(form);
+                const reservationId = form.getAttribute('data-reservationId');
+                const reservationDate = formData.get('reservationDate');
+                const startTime = formData.get('startTime');
+                const endTime = formData.get('endTime');
+                const password = formData.get('password');
+                const reservationPerson = formData.get('name');
+                const activity = formData.get('activity');
+
+                if (reservationDate === localReservationInfo.startDateTime.split(' ')[0] && startTime === localReservationInfo.startDateTime.split(' ')[1].split(':')[0] && endTime === localReservationInfo.endDateTime.split(' ')[1].split(':')[0] && reservationPerson === localReservationInfo.reservationPerson && activity === localReservationInfo.activity) {
+                    alert('변경된 내용이 없습니다.');
+                    return;
+                }
+
+                if (password.length === 0) {
+                    alert('비밀번호를 입력해주세요.');
+                    return;
+                } else if (password.length < 4) {
+                    alert('비밀번호가 4자리 미만입니다. 비밀번호를 4자리로 입력해주세요.');
+                    return;
+                } else if (password.length > 4) {
+                    alert('비밀번호가 4자리 초과입니다. 비밀번호를 4자리로 입력해주세요.');
+                    return;
+                } else if (password.match(/[^0-9]/)) {
+                    alert('숫자 이외의 문자가 들어가 있습니다. 비밀번호는 숫자로만 입력해주세요.');
+                    return;
+                }
+
+                if (activity.length === 0) {
+                    alert('활동 내용을 입력해주세요.');
+                    return;
+                } else if (activity.startsWith(' ') || activity.endsWith(' ')) {
+                    alert('활동 내용 처음과 마지막에 공백을 입력할 수 없습니다.');
+                    return;
+                }
+                else if (activity.match(/^\d/)) {
+                    alert('활동 내용은 숫자로 시작할 수 없습니다.');
+                    return;
+                }
+                else if (activity.match(/[^ㄱ-ㅎ|가-힣|a-z|A-Z|0-9|\s]/)) {
+                    alert('활동 내용에 특수문자를 입력할 수 없습니다.');
+                    return;
+                }
+
+                if (reservationPerson.length === 0) {
+                    alert('예약자명을 입력해주세요.');
+                    return;
+                }
+                else if (reservationPerson.startsWith(' ') || reservationPerson.endsWith(' ')) {
+                    alert('예약자명 처음과 마지막에 공백을 입력할 수 없습니다.');
+                    return;
+                }
+                else if (reservationPerson.match(/^\d/)) {
+                    alert('예약자명은 숫자로 시작할 수 없습니다.');
+                    return;
+                }
+                else if (reservationPerson.match(/[^ㄱ-ㅎ|가-힣|a-z|A-Z|0-9|\s]/)) {
+                    alert('예약자명에 특수문자를 입력할 수 없습니다.');
+                    return;
+                }
+
+                if (parseInt(startTime.split(':')[0]) === parseInt(endTime.split(':')[0])) {
+                    alert('시작 시간과 종료 시간이 같습니다.');
+                    return;
+                }
+                else if (parseInt(startTime.split(':')[0]) > parseInt(endTime.split(':')[0])) {
+                    alert('종료 시간이 시작 시간보다 빠릅니다.');
+                    return;
+                }
+
+                if (_this.checkReservationTimeForUpdate(reservationId, reservationDate, startTime, endTime)) {
+                    alert('예약이 불가능한 시간입니다. 시간을 다시 한 번 확인해주세요.');
+                    return;
+                }
+
+                const reservationInfo = {
+                    reservationId: reservationId,
+                    reservationDate: reservationDate,
+                    startTime: startTime,
+                    endTime: endTime,
+                    activity: activity,
+                    reservationPerson: reservationPerson,
+                    password: password
+                };
+                const response = await fetch('/api/reservation/update', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(reservationInfo),
+                });
+                if (response) {
+                    response.json().then((data) => {
+                        if (data.success) {
+                            alert('변경이 완료되었습니다.');
+                            bootstrap.Modal.getInstance(document.getElementById('reservationModal')).hide();
+                            calendarManager.deleteCalendar();
+                            calendarManager.setupCalendar();
+                        } else {
+                            alert('변경에 실패했습니다.');
+                        }
+                    });
+                }
+            });
+        }
+
+        function setReservationDeleteButtonEvent(button, reservationId) {
+            button.addEventListener('click', async (e) => {
+                const response = await fetch('/api/reservation/delete', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ reservationId: reservationId }),
+                });
+                if (response) {
+                    response.json().then((data) => {
+                        if (data.success) {
+                            alert('삭제가 완료되었습니다.');
+                            bootstrap.Modal.getInstance(document.getElementById('reservationModal')).hide();
+                            calendarManager.deleteCalendar();
+                            calendarManager.setupCalendar();
+                        } else {
+                            alert('삭제에 실패했습니다.');
+                        }
+                    });
+                }
+            });
+        }
+        return [modalHeader, modalBody, modalFooter];
+    }
+    checkReservationTime(newReservationTime, existingReservationInfo) {
+        // 예약이 불가능한 시간인지 확인
+        const isReservationTime = existingReservationInfo.some((reservation) => {
+            const existingReservationStart = parseInt(reservation.startDateTime.split(' ')[1].split(':')[0]);
+            const existingReservationEnd = parseInt(reservation.endDateTime.split(' ')[1].split(':')[0]);
+
+            // if((newReservationTime.start>=existingReservationStart && newReservationTime.start<existingReservationEnd)
+            // ||(newReservationTime.end>existingReservationStart && newReservationTime.end<=existingReservationEnd)
+            // ||(newReservationTime.start<existingReservationStart && newReservationTime.end>=existingReservationEnd)){
+            //     return true;
+            // }
+            if (newReservationTime.start >= existingReservationStart && newReservationTime.start < existingReservationEnd) {
+                console.log('첫번째 조건에 걸림')
+                return true;
+            }
+
+            if (newReservationTime.end > existingReservationStart && newReservationTime.end <= existingReservationEnd) {
+                console.log('두번째 조건에 걸림')
+                return true;
+            }
+            if (newReservationTime.start < existingReservationStart && newReservationTime.end >= existingReservationEnd) {
+                console.log('세번째 조건에 걸림')
+                return true;
+            }
+
+            return false;
+        });
+        console.log(isReservationTime);
+        return isReservationTime;
+    }
+    checkReservationTimeForCreate(date, startTime, endTime) {
+        const newReservationTime = {
+            start: parseInt(startTime.split(':')[0]),
+            end: parseInt(endTime.split(':')[0])
+        };
+
+        const reservationInfo = calendarManager.getCalendarReservationInfoByDate(date);
+        console.log(date, startTime, endTime, newReservationTime)
+        console.log(reservationInfo);
+
+        // 예약이 불가능한 시간인지 확인
+        const isOverlap = this.checkReservationTime(newReservationTime, reservationInfo);
+        return isOverlap;
+    }
+    checkReservationTimeForUpdate(reservationId, date, startTime, endTime) {
+        const newReservationTime = {
+            start: parseInt(startTime.split(':')[0]),
+            end: parseInt(endTime.split(':')[0])
+        };
+        const originalReservationInfo = calendarManager.getCalendarReservationInfoByDate(date);
+        const existingReservationInfo = originalReservationInfo.filter((reservation) => reservation.id !== parseInt(reservationId));
+
+        // 예약이 불가능한 시간인지 확인
+        const isOverlap = this.checkReservationTime(newReservationTime, existingReservationInfo);
+        return isOverlap;
+    }
+
+    setReservationModal() {
+        const _this = this;
+        const reservationModal = document.getElementById('reservationModal');
+        const reservationModalContent = reservationModal.querySelector('.modal-content');
+        const reservationModalBody = reservationModal.querySelector('.modal-body');
+        const reservationArea = reservationModalBody.querySelector('.reservation-area');
+
+
+        reservationModal.addEventListener('show.bs.modal', (event) => {
+            reservationModalContent.replaceChildren(...this.createTimeTable());
+            reservationModalContent.querySelector('.modal-footer').querySelector('.reservationButton').addEventListener('click', (e) => {
+                reservationModalContent.replaceChildren(...this.createReservationForm());
+            });
+            const reservationModalTitle = reservationModalContent.querySelector('.modal-title');
+            const date = event.relatedTarget.getAttribute('data-bs-date')
+            const yearMonthInfo = calendarManager.getCalendarDate();
+            const dateReservationInfo = calendarManager.getCalendarReservationInfo(date);
+            this.setReservationInfo([...dateReservationInfo]);
+            this.setReservationDate({ year: yearMonthInfo.year, month: yearMonthInfo.month, date: parseInt(date) });
+            this.setIsPast(this.findIsPast(this.getReservationDate()));
+            console.log(this.getIsPast());
+            reservationModalTitle.textContent = `${yearMonthInfo.year}년 ${yearMonthInfo.month}월 ${date}일 예약 현황`;
+            setReservationInfoElement(reservationModalContent, dateReservationInfo);
+        });
+        // reservationModal.addEventListener('hidden.bs.modal', (event) => {
+        //     const reservationModalBody = reservationModal.querySelector('.modal-body');
+        //     const reservationModalTitle = reservationModal.querySelector('.modal-title');
+        //     const reservationArea = reservationModalBody.querySelector('.reservation-area');
+        //     reservationArea.querySelectorAll('div[class*="reservation"]').forEach((reservation) => {
+        //         Array.from(reservation.classList).forEach((className) => {
+        //             if (className !== 'reservation' && className !== 'reservation-division' && className !== 'border-top') {
+        //                 reservation.classList.remove(className);
+        //             }
+        //         });
+        //         Array.from(reservation.attributes).forEach((attr) => {
+        //             if (attr.name !== 'class' && attr.name !== 'data-number') {
+        //                 reservation.removeAttribute(attr.name);
+        //             }
+        //         });
+        //         reservation.textContent = '';
+        //     });
+        //     this.resetReservationData();
+        //     reservationModalTitle.textContent = '예약현황';
+        // });
+
+        function setReservationInfoElement(reservationModalContent, reservationInfo) {
+            reservationInfo.forEach((info) => {
+                const startTime = `${info.startDateTime.split(' ')[1].split(':')[0]}:${info.startDateTime.split(' ')[1].split(':')[1]}`;
+                const endTime = `${info.endDateTime.split(' ')[1].split(':')[0]}:${info.endDateTime.split(' ')[1].split(':')[1]}`;
+                const convertedStartNumber = convertTimeToNumber(startTime);
+                const convertedEndNumber = convertTimeToNumber(endTime);
+                const interval = convertedEndNumber - convertedStartNumber;
+                for (let i = convertedStartNumber; i < convertedStartNumber + interval; i++) {
+                    const reservationElement = findReservationElement(i);
+                    reservationElement.classList.add('reserved');
+                    reservationElement.setAttribute('data-reservationId', `${info.id}`);
+                    if (i === convertedStartNumber) {
+                        reservationElement.textContent = `${info.activity}`;
+                    }
+                    reservationElement.addEventListener('click', (e) => {
+                        if (_this.getIsPast()) {
+                            alert('지난 예약은 변경 및 삭제가 불가능합니다.');
+                            return;
+                        }
+                        e.preventDefault();
+                        const reservationId = e.target.getAttribute('data-reservationId');
+                        reservationModalContent.replaceChildren(..._this.createReservationAuthForm(reservationId));
+                    });
+                }
+            });
+        }
+        function convertTimeToNumber(time) {
+            const convertedTime = parseInt(time.split(':')[0]) + (parseInt(time.split(':')[1]) / 60);
+            return convertedTime - 8
+        }
+        function findReservationElement(timeNumber) {
+            const reservationArea = document.getElementById('reservationModal').querySelector('.reservation-area');
+            return reservationArea.querySelector(`div[data-number='${timeNumber}']`);
+        }
+    }
+}
+
+
+function createCalendar(calendarManager) {
+    calendarManager.addCalendar('today');
+    calendarManager.addCalendar('prev');
+    calendarManager.addCalendar('next');
+}
+
+function setCalendarEvent() {
+    const prevButton = document.querySelector('#scroll-section-4 .prev-button');
+    const nextButton = document.querySelector('#scroll-section-4 .next-button');
+    const calendarContent = document.querySelector('#scroll-section-4 .content');
+    if (isMobile != true) {
+        prevButton.addEventListener('click', () => {
+            calendarManager.scrollUpCalendar();
+            const calendarIndex = calendarManager.getCalendarIndex();
+            if (calendarIndex === 0) {
+                prevButton.classList.add('hide');
+            } else {
+                nextButton.classList.remove('hide');
+            }
+        });
+        nextButton.addEventListener('click', () => {
+            calendarManager.scrollDownCalendar();
+            const calendarIndex = calendarManager.getCalendarIndex();
+            if (calendarIndex === 2) {
+                nextButton.classList.add('hide');
+            } else {
+                prevButton.classList.remove('hide');
+            }
+        });
+    }
+    else {
+        calendarContent.style.fontSize = '0.75rem';
+
+        prevButton.remove();
+        nextButton.remove();
+        let touchStartX = 0;
+        let touchEndX = 0;
+
+        calendarContent.addEventListener('touchstart', (e) => {
+            touchStartX = e.touches[0].clientX;
+        });
+
+        calendarContent.addEventListener('touchend', (e) => {
+            touchEndX = e.changedTouches[0].clientX;
+            if (touchStartX - touchEndX > 50) {
+                calendarManager.scrollDownCalendar();
+            } else if (touchStartX - touchEndX < -50) {
+                calendarManager.scrollUpCalendar();
+            }
+        });
+    }
+}
+
+
+
+function setReservationModalEvent(calendarMordalManager, calendarManager) {
+    calendarMordalManager.setReservationModal(calendarManager);
+}
+
+function createYearMonth(year, month, calendar) {
+    const yearArea = calendar.querySelector('.calendar-header-title-year');
+    const monthArea = calendar.querySelector('.calendar-header-title-month');
+    yearArea.textContent = `${year}. `;
+    monthArea.textContent = month;
+}
+
 const youtubeIframeInfo = {
     widthRatio: 16,
     heightRatio: 9,
@@ -203,8 +1275,11 @@ const MOBILEVIDEONAME = "jabez_background_video_2_fontSize";
 // id에 scroll-section이 포함된 section들 중에서 content관련 id가 들어간 section의 정보를 infiniteScrollInfo에 추가하고, section정보에 조회 시작 ID를 추가.
 const infiniteScrollManager = new InfiniteScrollManager();
 
+const calendarManager = new CalendarManager();
+const calendarModalManager = new CalendarModalManager();
+
 function createSection(id, contentSectionName, contentSectionColor) {
-    const startSectionId = 3;
+    const startSectionId = 4;
     const section = createElement("section", { classList: ["container-fluid"], id: `scroll-section-${startSectionId + id}`, "data-contentSectionId": `${id}`, style: { backgroundColor: `${contentSectionColor}` } }); // parameter로 받아서 적용할 수 있도록 수정
 
     const container = createElement("div", { classList: ["container", "d-flex", "align-items-center", "justify-content-center", "flex-column"], style: { height: "100%" } });
@@ -243,26 +1318,36 @@ function createSection(id, contentSectionName, contentSectionColor) {
     return section;
 }
 
-function createListItem(id, contentSectionName) {
-    return createElement("li", { classList: ["list-group-item", "list-group-item-action", "list-group-item-light"], "data-contentListId": `${id}` }, [`${contentSectionName}`]); // parameter로 받아서 적용할 수 있도록 수정
-}
-
 // API 호출해서 section 정보를 가져온 뒤 section을 생성
 async function createContentSectionInfo(sectionInfoManager) {
     const contentSections = this.document.querySelector(".content-sections");
-    const contentListNavigator = this.document.querySelector(".contentListNavigator").querySelector(".list-group");
     const json = await fetchData("/api/section/get");
     json.forEach((data) => {
         const newSection = createSection(data.id, data.contentSectionName, data.contentSectionColor);
         contentSections.appendChild(newSection);
-        const newListItem = createListItem(data.id, data.contentSectionName);
-        contentListNavigator.appendChild(newListItem);
     });
     contentSections.querySelectorAll("section").forEach((section) => {
         const sectionId = section.getAttribute("id").split("-")[2];
         sectionInfoManager.addSectionInfo(new SectionInfo(sectionId, 0, { section: section }));
     });
 }
+
+async function createNavigatorListItem() {
+    const contentListNavigator = document.querySelector(".contentListNavigator").querySelector(".list-group");
+    // 공간 예약 페이지 리스트 생성
+    const listItemToCalendar = createElement("li", { classList: ["list-group-item", "list-group-item-action", "list-group-item-light"] }, ["공간 예약"]);
+    const listItemToTop = createElement("li", { classList: ["list-group-item", "list-group-item-action", "list-group-item-light"] }, ["위로 가기"]);
+
+    contentListNavigator.appendChild(listItemToCalendar);
+    // 컨텐츠 페이지 리스트 생성
+    const json = await fetchData("/api/section/get");
+    json.forEach((data) => {
+        const listItem = createElement("li", { classList: ["list-group-item", "list-group-item-action", "list-group-item-light"], "data-contentListId": `${data.id}` }, [`${data.contentSectionName}`]);
+        contentListNavigator.appendChild(listItem);
+    });
+    contentListNavigator.appendChild(listItemToTop);
+}
+
 
 function getTotalOffsetTop(element) {
     let totalOffsetTop = 0;
@@ -362,9 +1447,11 @@ function setDefaultSectionInfo(sectionInfoManager) {
         message2_fadeOut_mobile: { start: 0.72, end: 0.86 },
     });
     const section3 = new SectionInfo(3, 2, { section: document.querySelector("#scroll-section-3") });
+    const section4 = new SectionInfo(4, 2, { section: document.querySelector("#scroll-section-4") });
     sectionInfoManager.addSectionInfo(section1);
     sectionInfoManager.addSectionInfo(section2);
     sectionInfoManager.addSectionInfo(section3);
+    sectionInfoManager.addSectionInfo(section4);
 }
 // 아이콘을 클릭하면 section으로 이동
 function setScrollDownIcon() {
@@ -379,7 +1466,7 @@ function setScrollDownIcon() {
 function setModalBehavior() {
     const modal = document.getElementById("myModal");
 
-    modal.querySelector(".modal-content").addEventListener("click", function (event) {
+    modal.querySelector(".modal-content-area").addEventListener("click", function (event) {
         if (event.target == this) {
             if (modal.classList.contains("d-flex")) {
                 modal.classList.remove("d-flex");
@@ -487,18 +1574,21 @@ function setVideoClick() {
         }
     });
 }
-function setContentSectionBehavior(infiniteScrollManager) {
-    const contentListNavigator = document.querySelector(".contentListNavigator");
-    document.querySelectorAll("section[data-contentSectionId]").forEach((section) => {
-        const contentListId = section.getAttribute("data-contentSectionId");
-        if (contentListId) {
-            const h2 = section.querySelector("h2");
-            h2.addEventListener("click", toggleContent);
-            const relatedNavItem = contentListNavigator.querySelector(`[data-contentListId="${contentListId}"]`);
-            if (relatedNavItem) {
-                relatedNavItem.addEventListener("click", navigateToSection);
-            }
-        }
+function setNavigatorBehavior() {
+    const navigator = document.querySelector(".contentListNavigator");
+    const reservationNavigatorItem = navigator.querySelectorAll(".list-group-item:not([data-contentListId])")[0];
+    const topPageNavigatorItem = navigator.querySelectorAll(".list-group-item:not([data-contentListId])")[1];
+    const contentSectionNavigatorItems = navigator.querySelectorAll(".list-group-item[data-contentListId]");
+
+    reservationNavigatorItem.addEventListener("click", function (event) {
+        window.scrollTo({ top: getTotalOffsetTop(document.querySelector("#scroll-section-4")), behavior: "smooth" });
+    });
+    topPageNavigatorItem.addEventListener("click", function (event) {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+
+    contentSectionNavigatorItems.forEach((item) => {
+        item.addEventListener("click", navigateToSection);
     });
 
     function navigateToSection(event) {
@@ -516,6 +1606,16 @@ function setContentSectionBehavior(infiniteScrollManager) {
             }
         });
     }
+}
+function setContentSectionBehavior(infiniteScrollManager) {
+    const contentListNavigator = document.querySelector(".contentListNavigator");
+    document.querySelectorAll("section[data-contentSectionId]").forEach((section) => {
+        const contentListId = section.getAttribute("data-contentSectionId");
+        if (contentListId) {
+            const h2 = section.querySelector("h2");
+            h2.addEventListener("click", toggleContent);
+        }
+    });
 
     function toggleContent(event) {
         const h2 = this;
@@ -550,7 +1650,7 @@ function setContentSectionBehavior(infiniteScrollManager) {
     }
 
     function updateNavigationActiveState(contentListId, isActive) {
-        contentListNavigator.querySelectorAll(".list-group-item").forEach((item) => {
+        contentListNavigator.querySelectorAll(".list-group-item[data-contentlistid]").forEach((item) => {
             if (item.getAttribute("data-contentListId") === contentListId) {
                 isActive ? item.classList.add("active") : item.classList.remove("active");
             }
@@ -558,19 +1658,50 @@ function setContentSectionBehavior(infiniteScrollManager) {
     }
 }
 
+function setPreventViewingSource(){
+    document.addEventListener('contextmenu', function(e) {
+        e.preventDefault();
+    });
+    document.addEventListener('keydown', function(e) {
+        if (e.keyCode === 123) { // F12 : 개발자 도구 열기
+            e.preventDefault();
+        }
+    });
+    // 소스코드 단축키 막기
+    document.onkeydown = function(e) {
+        if (e.ctrlKey && (e.keyCode === 85 || e.keyCode === 83 || e.keyCode === 123)) {
+            return false;
+        }
+    };
+    // mac 소스보기 단축키 막기
+    document.addEventListener('keydown', function(e) {
+        if (e.keyCode === 85 && (navigator.platform.match('Mac') ? e.metaKey : e.ctrlKey)) {
+            e.preventDefault();
+        }
+    });
+}
+
 window.addEventListener("DOMContentLoaded", async function (event) {
     setDefaultSectionInfo(sectionInfoManager);
-    createContentSectionInfo(sectionInfoManager).then(() => {
-        setVideoSrc();
-        setVideoClick();
-        setScrollDownIcon();
-        setModalBehavior();
-        setInfiniteScrollManager(infiniteScrollManager);
-        setContentSectionBehavior(infiniteScrollManager);
-        resizeSection();
-        resizeVideo();
-        resizeNavigator();
-    });
+    createContentSectionInfo(sectionInfoManager)
+        .then(createNavigatorListItem)
+        .then(() => {
+            setNavigatorBehavior();
+            setVideoSrc();
+            setVideoClick();
+            setScrollDownIcon();
+            setModalBehavior();
+            setInfiniteScrollManager(infiniteScrollManager);
+            setContentSectionBehavior(infiniteScrollManager);
+            createCalendar(calendarManager);
+            setCalendarEvent(calendarManager);
+
+            setReservationModalEvent(calendarModalManager);
+            setPreventViewingSource();
+            resizeSection();
+            resizeVideo();
+            resizeNavigator();
+        });
 });
 
 
@@ -638,27 +1769,33 @@ function resizeNavigator() {
 
     // 데스크탑에서 브라우저의 가로 길이가 992px 이하일 때
     if (isMobile != true && window.matchMedia("(max-width: 992px)").matches) {
-        applyStyle(navigatorArea, { bottom: "10%", right: "3%" });
+        const navigatorHeight = navigatorArea.scrollHeight;
+        const convertedToPercentage = ((navigatorHeight * 0.5) / window.innerHeight) * 100;
+        applyStyle(navigatorArea, { bottom: `${convertedToPercentage + 2}%`, right: "3%" });
     } else if (isMobile != true && window.matchMedia("(min-width: 992px)").matches) {
         applyStyle(navigatorArea, { bottom: "50%", right: "5%" });
     }
 
     // 모바일 세로 모드일 때
     if (isMobile && window.matchMedia("(orientation: portrait)").matches) {
-        applyStyle(navigatorArea, { bottom: "10%", right: "3%" });
         applyStyleToElements(navigator, {
             width: "100%",
             padding: "0.2rem",
             fontSize: "0.8rem"
         });
+        const navigatorHeight = navigatorArea.scrollHeight;
+        const convertedToPercentage = ((navigatorHeight * 0.5) / window.innerHeight) * 100;
+        applyStyle(navigatorArea, { bottom: `${convertedToPercentage + 2}%`, right: "3%" });
         // 모바일 가로 모드일 때
     } else if (isMobile && window.matchMedia("(orientation: landscape)").matches) {
-        applyStyle(navigatorArea, { bottom: "17%", right: "2%" });
         applyStyleToElements(navigator, {
             width: "100%",
             padding: "0.2rem",
             fontSize: "0.8rem"
         });
+        const navigatorHeight = navigatorArea.scrollHeight;
+        const convertedToPercentage = ((navigatorHeight * 0.5) / window.innerHeight) * 100;
+        applyStyle(navigatorArea, { bottom: `${convertedToPercentage + 2}%`, right: "2%" });
     }
 }
 
@@ -844,7 +1981,7 @@ async function initializePage(infiniteScrollManager) {
         // 컨텐츠가 있으면 더보기 버튼 추가
         if (infiniteScrollManager.getIsFetching(sectionId) == true) {
             addMoreButton(sectionId, infiniteScrollManager, intersectionObserverUnlimitedScroll);
-        } 
+        }
         // 컨텐츠가 하나도 없으면 닫기 버튼과 메시지 추가
         else if ((infiniteScrollManager.getIsFetching(sectionId) == false) && (infiniteScrollManager.getSectionObj(sectionId).querySelector(".content-list").querySelector(".col") == null)) {
             const sectionContentList = infiniteScrollManager.getSectionObj(sectionId).querySelector(".content-list");
@@ -853,7 +1990,7 @@ async function initializePage(infiniteScrollManager) {
             sectionContentList.classList.add("d-flex", "flex-column", "justify-content-center", "align-items-center");
             sectionContentList.appendChild(h3);
             addCloseButton(sectionId, infiniteScrollManager);
-        } 
+        }
         // 더이상 추가적인 컨텐츠가 없으면 닫기 버튼 추가
         else {
             addCloseButton(sectionId, infiniteScrollManager);
@@ -1299,4 +2436,4 @@ const intersectionObserverUnlimitedScroll = new IntersectionObserver(async (entr
             section.querySelector(".content-list").appendChild(btnClose);
         }
     }
-}, { threshold: 1.0 });
+}, { threshold: 1.0 }); 

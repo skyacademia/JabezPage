@@ -204,7 +204,7 @@ app.get('/admin/manageContentSection', (req, res) => {
   if (req.session.isLogin != true) {
     res.redirect('/admin/login');
   }
-  
+
   let db = new sqlite3.Database('./database/Jabez_database.db', sqlite3.OPEN_READONLY, (err) => {
     if (err) {
       console.error(err.message);
@@ -286,7 +286,7 @@ app.post('/api/section/create', (req, res) => {
   });
   // 데이터베이스에 데이터를 추가
   const sqlQuery = `INSERT INTO contentSection_Information_tbl (contentSectionName,contentSectionColor) VALUES (?,?)`;
-  db.run(sqlQuery, [sectionName,sectionColor], (err) => {
+  db.run(sqlQuery, [sectionName, sectionColor], (err) => {
     if (err) {
       console.error(err.message);
     } else {
@@ -508,7 +508,6 @@ app.get('/api/content/get/section/:contentSectionId/:id/:count', (req, res) => {
       if (err) {
         console.error(err.message);
       } else {
-        console.log('조회한 데이터 : ', rows);
         console.log('Query successfully executed.');
         res.send(rows);
       }
@@ -608,12 +607,11 @@ app.post('/api/content/update', (req, res) => {
     res.redirect('/admin/login');
   }
   const contentSectionNums = req.body.contentSectionNum;
-  const ids = req.body.idToUpdate;
+  const ids = Array.isArray(req.body.idToUpdate) ? req.body.idToUpdate : [req.body.idToUpdate];
   const inputInfo = [];
   ids.forEach((id, index) => {
     inputInfo.push({ id: id, contentSectionNum: contentSectionNums[index] });
   });
-
   // id을 key, contentSectionNum을 value로 하는 객체를 만듦
   let db = new sqlite3.Database('./database/Jabez_database.db', sqlite3.OPEN_READWRITE, (err) => {
     if (err) {
@@ -683,6 +681,317 @@ app.post('/api/content/delete', (req, res) => {
   });
 });
 
+app.get('/api/reservation/get/:year/:month', (req, res) => {
+  const year = req.params.year;
+  const month = req.params.month;
+  const yearMonthString = year + '-' + month + '%';
+  let db = new sqlite3.Database('./database/Jabez_database.db', sqlite3.OPEN_READONLY, (err) => {
+    if (err) {
+      console.error(err.message);
+    } else {
+      console.log('Connected to the database.');
+    }
+  }
+  );
+  // 데이터베이스에서 데이터를 가져온 뒤 데이터를 전송
+  db.all('SELECT * FROM reservation_Information_tbl WHERE startDateTime LIKE ? ORDER BY startDateTime ASC', yearMonthString, (err, rows) => {
+    if (err) {
+      console.error(err.message);
+    } else {
+      console.log('Query successfully executed.');
+      res.send(rows);
+    }
+  });
+  // 데이터베이스 연결 종료
+  db.close((err) => {
+    if (err) {
+      console.error(err.message);
+    } else {
+      console.log('Close the database connection.');
+    }
+  }
+  );
+});
+
+app.post('/api/reservation/create', (req, res) => {
+  const reservationDate = req.body.reservationDate;
+  const activity = req.body.activity;
+  const startTime = req.body.startTime;
+  const endTime = req.body.endTime;
+  const name = req.body.reservationPerson;
+  const password = req.body.password;
+
+  let db = new sqlite3.Database('./database/Jabez_database.db', sqlite3.OPEN_READWRITE, (err) => {
+    if (err) {
+      console.error(err.message);
+    } else {
+      console.log('Connected to the database.');
+    }
+  });
+
+  const sqlSelectQuery = `SELECT * FROM reservation_Information_tbl WHERE startDateTime LIKE ?`;
+  db.all(sqlSelectQuery, `${reservationDate}%`, (err, rows) => {
+    if (err) {
+      console.error(err.message);
+    } else {
+      if (rows.length > 0) {
+        const newStartTime = startTime.split(':')[0];
+        const newEndTime = endTime.split(':')[0];
+
+        rows.forEach((row) => {
+          const startTime = row.startDateTime.split(' ')[1].split(':')[0];
+          const endTime = row.endDateTime.split(' ')[1].split(':')[0];
+
+          // 예약 시작 시간이 이미 예약된 시간과 겹치는지 확인
+          if (newStartTime >= startTime && newStartTime < endTime) {
+            console.log('예약 시작 시간이 이미 예약된 시간과 겹칩니다.');
+            res.send({ success: false, message: '이미 예약된 시간입니다.' });
+          }
+          // 예약 종료 시간이 이미 예약된 시간과 겹치는지 확인
+          if (newEndTime > startTime && newEndTime <= endTime) {
+            console.log('예약 종료 시간이 이미 예약된 시간과 겹칩니다.');
+            res.send({ success: false, message: '이미 예약된 시간입니다.' });
+          }
+          // 예약 시작 시간과 종료 시간이 이미 예약된 시간을 포함하는지 확인
+          if (newStartTime < startTime && newEndTime >= endTime) {
+            console.log('예약 시간이 이미 예약된 시간을 포함합니다.');
+            res.send({ success: false, message: '이미 예약된 시간입니다.' });
+          }
+        });
+      }
+
+      // 데이터베이스에 데이터를 추가
+      const formattedStartDateTime = reservationDate + " " + startTime + ':00';
+      const formattedEndDateTime = reservationDate + " " + endTime + ':00';
+      const encryptedPasswordAndSalt = encryptPassword(password);
+      const encryptedPassword = encryptedPasswordAndSalt[0];
+      const salt = encryptedPasswordAndSalt[1];
+
+      const sqlInsertQuery = `INSERT INTO reservation_Information_tbl (activity, startDateTime, endDateTime, reservationPerson, password, salt) VALUES (?,?,?,?,?,?)`;
+      db.run(sqlInsertQuery, [activity, formattedStartDateTime, formattedEndDateTime, name, encryptedPassword, salt], (err) => {
+        if (err) {
+          console.error(err.message);
+        } else {
+          // 데이터베이스에 추가되면 성공 메시지 전송
+          console.log('Query successfully executed.');
+          res.send({ success: true });
+        }
+      });
+    }
+  });
+
+  // 데이터베이스 연결 종료
+  db.close((err) => {
+    if (err) {
+      console.error(err.message);
+    } else {
+      console.log('Close the database connection.');
+    }
+  }
+  );
+});
+
+app.post('/api/reservation/auth', (req, res) => {
+  const id = req.body.reservationId;
+  const password = req.body.password;
+  let db = new sqlite3.Database('./database/Jabez_database.db', sqlite3.OPEN_READONLY, (err) => {
+    if (err) {
+      console.error(err.message);
+    } else {
+      console.log('Connected to the database.');
+    }
+  });
+  // 데이터베이스에서 id와 password가 일치하는 데이터가 있는지 확인하고 있으면 true, 없으면 false 전송
+  const sqlQuery = `SELECT * FROM reservation_Information_tbl WHERE id = ?`;
+  db.all(sqlQuery, id, (err, rows) => {
+    if (err) {
+      console.error(err.message);
+    } else {
+      if (rows.length > 0) {
+        const salt = rows[0].salt;
+        const encryptedPassword = encryptPassword(password, salt)[0];
+        const dbPassword = rows[0].password;
+        if (encryptedPassword === dbPassword) {
+          req.session.reservationAuth = true;
+          req.session.save();
+          res.send({ success: true });
+        } else {
+          res.send({ success: false });
+        }
+      } else {
+        res.send({ success: false });
+      }
+    }
+  });
+  // 데이터베이스 연결 종료
+  db.close((err) => {
+    if (err) {
+      console.error(err.message);
+    } else {
+      console.log('Close the database connection.');
+    }
+  });
+});
+
+app.post('/api/reservation/delete', (req, res) => {
+  const id = req.body.reservationId;
+  // 예약 수정 또는 삭제를 위한 인증이 되어있지 않은 경우
+  if (req.session.reservationAuth !== undefined && req.session.reservationAuth !== true) {
+    console.log("예약 삭제를 위한 인증이 되어있지 않습니다.");
+    return res.send({ success: false });
+  }
+  // 로그인이 되어있지 않은 경우
+  else if (req.session.isLogin !== undefined && req.session.isLogin !== true) {
+    console.log("로그인이 되어있지 않습니다.");
+    return res.redirect('/admin/login');
+  }
+  let db = new sqlite3.Database('./database/Jabez_database.db', sqlite3.OPEN_READWRITE, (err) => {
+    if (err) {
+      console.error(err.message);
+    } else {
+      console.log('Connected to the database.');
+    }
+  });
+  // 데이터베이스에서 id로 조회한 뒤, 비밀번호가 일치한지 확인하고 같으면 데이터를 삭제
+  db.run(`DELETE FROM reservation_Information_tbl WHERE id = ?`, id, (err) => {
+    if (err) {
+      console.error(err.message);
+    } else {
+      // 데이터베이스에서 삭제되면 성공 메시지 전송
+      console.log('Query successfully executed.');
+      res.send({ success: true });
+    }
+  });
+  // 데이터베이스 연결 종료
+  db.close((err) => {
+    if (err) {
+      console.error(err.message);
+    } else {
+      console.log('Close the database connection.');
+    }
+  });
+});
+
+app.post('/api/reservation/update', (req, res) => {
+  const id = req.body.reservationId;
+  const activity = req.body.activity;
+  const reservationDate = req.body.reservationDate;
+  const startTime = req.body.startTime;
+  const endTime = req.body.endTime;
+  const name = req.body.reservationPerson;
+  const password = req.body.password;
+
+  // 예약 수정 또는 삭제를 위한 인증이 되어있지 않은 경우
+  if (req.session.reservationAuth !== undefined && req.session.reservationAuth !== true) {
+    console.log("예약 수정을 위한 인증이 되어있지 않습니다.");
+    return res.send({ success: false });
+  }
+  // 로그인이 되어있지 않은 경우
+  else if (req.session.isLogin !== undefined && req.session.isLogin !== true) {
+    console.log("로그인이 되어있지 않습니다.");
+    return res.redirect('/admin/login');
+  }
+
+  let db = new sqlite3.Database('./database/Jabez_database.db', sqlite3.OPEN_READWRITE, (err) => {
+    if (err) {
+      console.error(err.message);
+    } else {
+      console.log('Connected to the database.');
+    }
+  }
+  );
+
+  const query = `SELECT * FROM reservation_Information_tbl WHERE startDateTime LIKE ?`;
+  db.all(query, `${reservationDate}%`, (err, rows) => {
+    if (err) {
+      console.error(err.message);
+    } else {
+      if (rows.length > 0) {
+        console.log('rows : ', rows);
+        const newStartTime = startTime.split(':')[0];
+        const newEndTime = endTime.split(':')[0];
+        const filteredRows = rows.filter((row) => parseInt(row.id) !== parseInt(id));
+        console.log('filteredRows : ', filteredRows);
+        filteredRows.forEach((row) => {
+          const startTime = row.startDateTime.split(' ')[1].split(':')[0];
+          const endTime = row.endDateTime.split(' ')[1].split(':')[0];
+
+          // 예약 시작 시간이 이미 예약된 시간과 겹치는지 확인
+          if (newStartTime >= startTime && newStartTime < endTime) {
+            console.log('예약 시작 시간이 이미 예약된 시간과 겹칩니다.');
+            res.send({ success: false, message: '이미 예약된 시간입니다.' });
+          }
+          // 예약 종료 시간이 이미 예약된 시간과 겹치는지 확인
+          if (newEndTime > startTime && newEndTime <= endTime) {
+            console.log('예약 종료 시간이 이미 예약된 시간과 겹칩니다.');
+            res.send({ success: false, message: '이미 예약된 시간입니다.' });
+          }
+          // 예약 시작 시간과 종료 시간이 이미 예약된 시간을 포함하는지 확인
+          if (newStartTime < startTime && newEndTime >= endTime) {
+            console.log('예약 시간이 이미 예약된 시간을 포함합니다.');
+            res.send({ success: false, message: '이미 예약된 시간입니다.' });
+          }
+        });
+
+        // 수정한 시간이 겹치지 않으면 데이터베이스에서 id로 조회한 뒤, 비밀번호가 일치한지 확인 후 데이터 수정
+        const sqlQuery = `SELECT * FROM reservation_Information_tbl WHERE id = ?`;
+        db.all(sqlQuery, id, (err, rows) => {
+          if (err) {
+            console.error(err.message);
+          } else {
+            if (rows.length > 0) {
+              const dbPassword = rows[0].password;
+              const dbSalt = rows[0].salt;
+              const formattedStartDateTime = reservationDate + " " + startTime + ':00';
+              const formattedEndDateTime = reservationDate + " " + endTime + ':00';
+
+              // undefined가 아니면 비밀번호를 변경하고, undefined면 비밀번호를 변경하지 않음
+              if (encryptPassword(password, dbSalt)[0] === dbPassword) {
+                db.run(`UPDATE reservation_Information_tbl SET activity = ?, startDateTime = ?, endDateTime = ?, reservationPerson = ? WHERE id = ?`,
+                  [activity, formattedStartDateTime, formattedEndDateTime, name, id], (err) => {
+                    if (err) {
+                      console.error(err.message);
+                    } else {
+                      // 데이터베이스에 수정되면 성공 메시지 전송
+                      console.log('Query successfully executed.');
+                      res.send({ success: true });
+                    }
+                  });
+              } else {
+                const encryptedPasswordAndSalt = encryptPassword(password);
+                const encryptedPassword = encryptedPasswordAndSalt[0];
+                const newSalt = encryptedPasswordAndSalt[1];
+                db.run(`UPDATE reservation_Information_tbl SET activity = ?, startDateTime = ?, endDateTime = ?, reservationPerson = ?, password=?, salt=? WHERE id = ?`,
+                  [activity, formattedStartDateTime, formattedEndDateTime, name, encryptedPassword, newSalt, id], (err) => {
+                    if (err) {
+                      console.error(err.message);
+                    } else {
+                      // 데이터베이스에 수정되면 성공 메시지 전송
+                      console.log('Query successfully executed.');
+                      res.send({ success: true });
+                    }
+                  });
+              }
+            } else {
+              res.send({ success: false });
+            }
+          }
+        });
+      }
+    }
+  });
+
+
+  // 데이터베이스 연결 종료
+  db.close((err) => {
+    if (err) {
+      console.error(err.message);
+    } else {
+      console.log('Close the database connection.');
+    }
+  }
+  );
+});
 
 
 // client가 ID, PW를 입력하고 '/api/loginAuth'으로 요청하면 계정이 존재하는지 확인

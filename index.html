@@ -34,10 +34,58 @@
 
 <body>
     <div id="myModal" class="modal align-items-center justify-content-center">
-        <div class="modal-content align-items-center justify-content-center">
+        <div class="modal-content-area align-items-center justify-content-center">
             <iframe width="560" height="315" src="" title="YouTube video player" frameborder="0"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share;"
                 allowfullscreen></iframe>
+        </div>
+    </div>
+    <div class="modal fade" id="reservationModal" tabindex="-1" aria-labelledby="reservationModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header" style="width: 100%;">
+                    <h1 class="modal-title fs-5" id="reservationModalLabel"></h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" style="width: 100%;">
+                    <div class="time-table row container">
+                        <div class="times-area col-3">
+                            <div class="time">09:00</div>
+                            <div class="time">10:00</div>
+                            <div class="time">11:00</div>
+                            <div class="time">12:00</div>
+                            <div class="time">13:00</div>
+                            <div class="time">14:00</div>
+                            <div class="time">15:00</div>
+                            <div class="time">16:00</div>
+                            <div class="time">17:00</div>
+                            <div class="time">18:00</div>
+                            <div class="time">19:00</div>
+                            <div class="time">20:00</div>
+                            <div class="time">21:00</div>
+                        </div>
+                        <div class="reservation-area col-9 position-relative">
+                            <div class="reservation border-top" data-number="1"></div>
+                            <div class="reservation-division" data-number="2"></div>
+                            <div class="reservation" data-number="3"></div>
+                            <div class="reservation-division" data-number="4"></div>
+                            <div class="reservation" data-number="5"></div>
+                            <div class="reservation-division" data-number="6"></div>
+                            <div class="reservation" data-number="7"></div>
+                            <div class="reservation-division" data-number="8"></div>
+                            <div class="reservation" data-number="9"></div>
+                            <div class="reservation-division" data-number="10"></div>
+                            <div class="reservation" data-number="11"></div>
+                            <div class="reservation-division" data-number="12"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer" style="width: 100%;">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
+                    <button type="button" class="btn btn-primary reservationButton">예약하기</button>
+                </div>
+            </div>
         </div>
     </div>
     <nav class="navbar sticky-top navbar-expand-lg bg-body-tertiary w-100 fixed-top" style="z-index: 100;">
@@ -134,12 +182,125 @@
                 </div>
             </div>
         </section>
+        <section class="container-fluid position-relative z-1 p-0" id="scroll-section-4">
+            <div class="container-fluid  sticky-top vh-100 p-0">
+                <button class="prev-button">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                        class="bi bi-caret-left-fill" viewBox="0 0 16 16">
+                        <path
+                            d="m3.86 8.753 5.482 4.796c.646.566 1.658.106 1.658-.753V3.204a1 1 0 0 0-1.659-.753l-5.48 4.796a1 1 0 0 0 0 1.506z" />
+                    </svg>
+                </button>
+                <button class="next-button">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                        class="bi bi-caret-right-fill" viewBox="0 0 16 16">
+                        <path
+                            d="m12.14 8.753-5.482 4.796c-.646.566-1.658.106-1.658-.753V3.204a1 1 0 0 1 1.659-.753l5.48 4.796a1 1 0 0 1 0 1.506z" />
+                    </svg>
+                </button>
+                <div
+                    class="content-area d-flex flex-column align-items-center justify-content-center overflow-hidden w-100 h-100">
+                    <div class="content">
+                        <div class="calendar prev-calendar mb-3 hide">
+                            <div class="calendar-header">
+                                <div class="calendar-header-title">
+                                    <span class="calendar-header-title-year"></span>
+                                    <span class="calendar-header-title-month"></span>
+                                </div>
+                            </div>
+                            <div class="calendar-body">
+                                <div class="calendar-week-day">
+                                    <div class="day">일</div>
+                                    <div class="day">월</div>
+                                    <div class="day">화</div>
+                                    <div class="day">수</div>
+                                    <div class="day">목</div>
+                                    <div class="day">금</div>
+                                    <div class="day">토</div>
+                                </div>
+                                <div class="calendar-days">
+                                    <div class="week"></div>
+                                    <div class="week"></div>
+                                    <div class="week"></div>
+                                    <div class="week"></div>
+                                    <div class="week"></div>
+                                    <div class="week"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="calendar today-calendar mb-3 show">
+                            <div class="calendar-header">
+                                <div class="calendar-header-title">
+                                    <span class="calendar-header-title-year"></span>
+                                    <span class="calendar-header-title-month"></span>
+                                </div>
+                            </div>
+                            <div class="calendar-body">
+                                <div class="calendar-week-day">
+                                    <div class="day">일</div>
+                                    <div class="day">월</div>
+                                    <div class="day">화</div>
+                                    <div class="day">수</div>
+                                    <div class="day">목</div>
+                                    <div class="day">금</div>
+                                    <div class="day">토</div>
+                                </div>
+                                <div class="calendar-days">
+                                    <div class="week"></div>
+                                    <div class="week"></div>
+                                    <div class="week"></div>
+                                    <div class="week"></div>
+                                    <div class="week"></div>
+                                    <div class="week"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="calendar next-calendar hide">
+                            <div class="calendar-header">
+                                <div class="calendar-header-title">
+                                    <span class="calendar-header-title-year"></span>
+                                    <span class="calendar-header-title-month"></span>
+                                </div>
+                            </div>
+                            <div class="calendar-body">
+                                <div class="calendar-week-day">
+                                    <div class="day">일</div>
+                                    <div class="day">월</div>
+                                    <div class="day">화</div>
+                                    <div class="day">수</div>
+                                    <div class="day">목</div>
+                                    <div class="day">금</div>
+                                    <div class="day">토</div>
+                                </div>
+                                <div class="calendar-days">
+                                    <div class="week"></div>
+                                    <div class="week"></div>
+                                    <div class="week"></div>
+                                    <div class="week"></div>
+                                    <div class="week"></div>
+                                    <div class="week"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="position-relative w-100 d-flex justify-content-center scrollDownArea">
+                    <svg xmls="http://www.w3.org/2000/svg" viewBox="0 0 23 33" class="bi scrollDown" fill="currentColor"
+                        style="width: 34.5px; height: 49.5px;">
+                        <rect style="fill:none;stroke:white;stroke-miterlimit:10;" x=".5" y=".5" width="22.06"
+                            height="31.73" rx="7.64" ry="7.64" />
+                        <path style="fill:white;stroke-width:0px;"
+                            d="M11.02,21.9c.14.14.32.21.51.21s.37-.07.51-.21l4.05-4.05c.28-.28.28-.73,0-1.01s-.73-.28-1.01,0l-2.83,2.83v-9.75c0-.4-.32-.72-.72-.72s-.72.32-.72.72v9.75l-2.83-2.83c-.28-.28-.73-.28-1.01,0s-.28.73,0,1.01l4.05,4.05Z" />
+                    </svg>
+                </div>
+            </div>
+        </section>
         <div class="content-sections">
-            
+
         </div>
         <div class="contentListNavigator">
             <div class="list-group">
-            
+
             </div>
         </div>
     </main>

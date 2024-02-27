@@ -37,15 +37,15 @@ nav {
 }
 #scroll-section-4 .prev-button {
     position: absolute;
-    left : 50%;
-    transform: translateX(-50%);
-    top: 2rem;
+    left : 10vw;
+    transform: translateY(-50%);
+    top: 50%;
     z-index: 1000;
     background-color: transparent;
     border: none;
 }
 #scroll-section-4 .prev-button svg{
-    width: 3rem;
+    width: 3rem;    
     height: 3rem;    
 }
 #scroll-section-4 .prev-button svg.hide{
@@ -54,9 +54,9 @@ nav {
 
 #scroll-section-4 .next-button {
     position: absolute;
-    right : 50%;
-    transform: translateX(50%);
-    bottom: 2rem;
+    right : 10vw;
+    transform: translateY(-50%);
+    top: 50%;
     z-index: 1000;
     background-color: transparent;
     border: none;
@@ -68,12 +68,12 @@ nav {
 #scroll-section-4 .content{
     transition: all 1.0s;
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
     justify-content: center;
 }
 .calendar{
-    width: 100%;
+    width: 75vw;
     transition: all 1.0s;
 }
 .calendar.show{
@@ -122,6 +122,7 @@ nav {
 }
 .calendar-days .date{
     height: 11vh;
+    overflow: hidden;
     color: black;
     cursor: pointer;
     border-right: rgb(216, 216, 216) 1px solid;
@@ -130,9 +131,16 @@ nav {
     flex-direction: column;
 }
 .calendar-days .date .date-reservation-list{
+    width: 100%;
+    height: 100%;
     list-style-type: none;
     padding: 0;
-    
+    margin: 0;
+}
+.calendar-days .date .date-reservation-list .date-reservation-info{
+    width: 100%;
+    height: 1.5rem;
+    overflow: hidden;
 }
 .calendar-days .date:last-child{
     border-right: none;
@@ -147,6 +155,69 @@ nav {
 .card-default-setting {
     opacity: 0;
     transition: all 1.0s;
+}
+
+#reservationModal .time-table {
+    width: 100%;
+}
+#reservationModal .times-area {
+    padding-right: 0;
+    transform: translateY(-0.75rem);
+}
+#reservationModal .time {
+    height: 1.5rem;
+    display: flex;
+    align-items: center;
+    padding-left: 10px;
+}
+
+
+#reservationModal .reservation-area {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    padding-left: 0;
+}
+
+#reservationModal .reservation-area .reservation {
+    height: 1.5rem;
+    border-bottom: 1px solid #ccc;
+    display: flex;
+    align-items: center;
+    padding-left: 10px;
+    width: 100%;
+}
+#reservationModal .reservation-area .reservation-division {
+    height: 1.5rem;
+    border-bottom: 1px solid #ccc;
+    display: flex;
+    align-items: center;
+    padding-left: 10px;
+    background-color: #f8f9fa;
+    width: 100%;
+}
+#reservationModal .reservation-area .reservation.reserved,
+#reservationModal .reservation-area .reservation-division.reserved {
+    height: 1.5rem;
+    display: flex;
+    align-items: center;
+    padding-left: 10px;
+    background-color: rgba(0, 0, 255, 0.3);
+    width: 100%;
+    border: 0;
+    cursor: pointer;
+}
+
+#reservationModal .reservation-area .reservation-division.selected{
+    height: 1.5rem;
+    border-bottom: 1px solid #ccc;
+    display: flex;
+    align-items: center;
+    padding-left: 10px;
+    background-color: rgba(255, 230, 0, 0.3);
+}
+.selected{
+    background-color: rgba(255, 230, 0, 0.3);
 }
 
 .animation-fadeIn-down {
@@ -272,11 +343,6 @@ section[id*=scroll-section][data-contentSectionId] .content-area h2.show svg {
     transition: all 0.5s;
 }
 
-.modal-content {
-    background-color: transparent;
-    transition: all 0.5s;
-    border: none;
-}
 #reservationModal .modal-content{
     background-color: white;
     border-radius: 1rem;
@@ -323,8 +389,7 @@ section[id*=scroll-section][data-contentSectionId] .content-area h2.show svg {
 .scrollDown-section-2{
     position: absolute;
     bottom: 2rem;
-    left: 50%;
-    transform: translateX(-50%);
+    left:calc(50% - 12.5px);
     z-index: 20;
     cursor: pointer;
     fill: white;
@@ -345,7 +410,7 @@ section[id*=scroll-section][data-contentSectionId] .content-area h2.show svg {
     background-color: rgba(0, 0, 0, 0.5);
 }
 .contentListNavigator .list-group-item-action{
-    width: 7rem;
+    max-width: 9rem;
     background-color: rgba(0, 0, 0, 0);
     border: 1px solid white;
     color: white;
