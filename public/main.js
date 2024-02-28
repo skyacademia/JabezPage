@@ -231,6 +231,16 @@ class CalendarManager {
             }
         });
     }
+    resizeCalendars() {
+        const calendarWidth = document.querySelector(`#scroll-section-4 .${this.calendarArray[this.calendarIndex]}-calendar`).offsetWidth;
+        this.calendarArea.style.transform = `translateX(${calendarWidth * ((this.calendarIndex * -1) + 1)}px)`;
+    }
+    setCalendarResizeOberver() {
+        const resizeObserver = new ResizeObserver(() => {
+            this.resizeCalendars();
+        });
+        resizeObserver.observe(document.querySelector('#scroll-section-4 .today-calendar'));
+    }
     getCalendarReservationInfo(date) {
         return this.calendar[this.calendarArray[this.calendarIndex]].getCalendarReservationInfo(date);
     }
@@ -393,7 +403,6 @@ class Calendar {
         });
     }
 
-
     getCalendarReservationInfo(date) {
         return this.dayReservation[date];
     }
@@ -521,9 +530,6 @@ class CalendarModalManager {
                 reservationAreaDiv.appendChild(reservationDivisionDiv);
             } else {
                 const reservationDiv = createElement('div', { classList: ['reservation'], 'data-number': `${i}` });
-                if (i === 1) {
-                    reservationDiv.classList.add('border-top');
-                }
                 reservationAreaDiv.appendChild(reservationDiv);
             }
         }
@@ -1144,18 +1150,24 @@ class CalendarModalManager {
         // });
 
         function setReservationInfoElement(reservationModalContent, reservationInfo) {
+            let count = 0;
             reservationInfo.forEach((info) => {
                 const startTime = `${info.startDateTime.split(' ')[1].split(':')[0]}:${info.startDateTime.split(' ')[1].split(':')[1]}`;
                 const endTime = `${info.endDateTime.split(' ')[1].split(':')[0]}:${info.endDateTime.split(' ')[1].split(':')[1]}`;
                 const convertedStartNumber = convertTimeToNumber(startTime);
                 const convertedEndNumber = convertTimeToNumber(endTime);
                 const interval = convertedEndNumber - convertedStartNumber;
+                count++;
                 for (let i = convertedStartNumber; i < convertedStartNumber + interval; i++) {
                     const reservationElement = findReservationElement(i);
                     reservationElement.classList.add('reserved');
                     reservationElement.setAttribute('data-reservationId', `${info.id}`);
+                    
                     if (i === convertedStartNumber) {
                         reservationElement.textContent = `${info.activity}`;
+                    }
+                    if(count%2 === 0){ // 짝수번째 예약은 배경색을 다르게 한다.
+                        reservationElement.style.backgroundColor = 'rgba(0,162,255,0.3)';
                     }
                     reservationElement.addEventListener('click', (e) => {
                         if (_this.getIsPast()) {
@@ -1680,6 +1692,9 @@ function setPreventViewingSource(){
         }
     });
 }
+function setResizeCalendarObserver(calendarManager){
+    calendarManager.setCalendarResizeOberver();
+}
 
 window.addEventListener("DOMContentLoaded", async function (event) {
     setDefaultSectionInfo(sectionInfoManager);
@@ -1695,6 +1710,7 @@ window.addEventListener("DOMContentLoaded", async function (event) {
             setContentSectionBehavior(infiniteScrollManager);
             createCalendar(calendarManager);
             setCalendarEvent(calendarManager);
+            setResizeCalendarObserver(calendarManager);
 
             setReservationModalEvent(calendarModalManager);
             setPreventViewingSource();
@@ -1833,12 +1849,17 @@ function resizeMessage() {
     }
 }
 
+// function resizeCalendarLayout(){
+//     calendarManager.resizeCalendars();
+// }
+
 window.addEventListener("resize", () => {
     resizeSection();
     resizeIframe();
     resizeVideo();
     resizeMessage();
     resizeNavigator();
+    // resizeCalendarLayout();
 });
 
 function createElement(tagName, attributes, children) {

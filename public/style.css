@@ -37,7 +37,7 @@ nav {
 }
 #scroll-section-4 .prev-button {
     position: absolute;
-    left : 10vw;
+    left : 3vw;
     transform: translateY(-50%);
     top: 50%;
     z-index: 1000;
@@ -54,7 +54,7 @@ nav {
 
 #scroll-section-4 .next-button {
     position: absolute;
-    right : 10vw;
+    right : 3vw;
     transform: translateY(-50%);
     top: 50%;
     z-index: 1000;
@@ -181,6 +181,15 @@ nav {
 
 #reservationModal .reservation-area .reservation {
     height: 1.5rem;
+    border-bottom: 1px solid #ccc;
+    display: flex;
+    align-items: center;
+    padding-left: 10px;
+    width: 100%;
+}
+#reservationModal .reservation-area .reservation:first-child {
+    height: 1.5rem;
+    border-top : 1px solid #ccc;
     border-bottom: 1px solid #ccc;
     display: flex;
     align-items: center;
