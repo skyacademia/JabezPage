@@ -339,8 +339,8 @@ class Calendar {
                     if (this.dayReservation[this.day].length > 0) {
                         this.dayReservation[this.day].forEach((reservation) => {
                             const reservationInfo = createElement('li', { classList: ['date-reservation-info'] },
-                                [isMobile?
-                                     `${reservation.activity}`:`${reservation.startDateTime.split(' ')[1].split(':')[0]}:${reservation.startDateTime.split(' ')[1].split(':')[1]}~${reservation.endDateTime.split(' ')[1].split(':')[0]}:${reservation.endDateTime.split(' ')[1].split(':')[1]} ${reservation.activity}`]);
+                                [isMobile ?
+                                    `${reservation.activity}` : `${reservation.startDateTime.split(' ')[1].split(':')[0]}:${reservation.startDateTime.split(' ')[1].split(':')[1]}~${reservation.endDateTime.split(' ')[1].split(':')[0]}:${reservation.endDateTime.split(' ')[1].split(':')[1]} ${reservation.activity}`]);
                             if (isMobile) { reservationInfo.style.height = '1rem'; }
                             dayReservationList.appendChild(reservationInfo);
                         });
@@ -397,7 +397,7 @@ class Calendar {
         const json = await fetchData(`/api/reservation/get/${thisYear}/${thisMonth}`);
         json.forEach((data) => {
             const startDateTime = data.startDateTime;
-            const day = startDateTime.split(' ')[0].split('-')[2];
+            const day = parseInt(startDateTime.split(' ')[0].split('-')[2]);
             const reservationInfo = { id: data.id, startDateTime: startDateTime, endDateTime: data.endDateTime, activity: data.activity, reservationPerson: data.reservationPerson };
             this.dayReservation[day].push(reservationInfo);
         });
@@ -632,7 +632,7 @@ class CalendarModalManager {
             const dateData = _this.getReservationDate();
 
             dateData.month = dateData.month < 10 ? `0${dateData.month}` : dateData.month;
-            const formattedReservationDate = `${dateData.year}-${dateData.month}-${parseInt(dateData.date)}`;
+            const formattedReservationDate = `${dateData.year}-${dateData.month}-${parseInt(dateData.date) < 10 ? `0${dateData.date}` : dateData.date}`;
 
             const startTimeNumber = parseInt(selectedReservationTime[0]);
             const endTimeNumber = parseInt(selectedReservationTime[selectedReservationTime.length - 1]) + 1;
@@ -1059,22 +1059,18 @@ class CalendarModalManager {
             //     return true;
             // }
             if (newReservationTime.start >= existingReservationStart && newReservationTime.start < existingReservationEnd) {
-                console.log('첫번째 조건에 걸림')
                 return true;
             }
 
             if (newReservationTime.end > existingReservationStart && newReservationTime.end <= existingReservationEnd) {
-                console.log('두번째 조건에 걸림')
                 return true;
             }
             if (newReservationTime.start < existingReservationStart && newReservationTime.end >= existingReservationEnd) {
-                console.log('세번째 조건에 걸림')
                 return true;
             }
 
             return false;
         });
-        console.log(isReservationTime);
         return isReservationTime;
     }
     checkReservationTimeForCreate(date, startTime, endTime) {
@@ -1084,8 +1080,6 @@ class CalendarModalManager {
         };
 
         const reservationInfo = calendarManager.getCalendarReservationInfoByDate(date);
-        console.log(date, startTime, endTime, newReservationTime)
-        console.log(reservationInfo);
 
         // 예약이 불가능한 시간인지 확인
         const isOverlap = this.checkReservationTime(newReservationTime, reservationInfo);
@@ -1124,7 +1118,6 @@ class CalendarModalManager {
             this.setReservationInfo([...dateReservationInfo]);
             this.setReservationDate({ year: yearMonthInfo.year, month: yearMonthInfo.month, date: parseInt(date) });
             this.setIsPast(this.findIsPast(this.getReservationDate()));
-            console.log(this.getIsPast());
             reservationModalTitle.textContent = `${yearMonthInfo.year}년 ${yearMonthInfo.month}월 ${date}일 예약 현황`;
             setReservationInfoElement(reservationModalContent, dateReservationInfo);
         });
@@ -1162,11 +1155,11 @@ class CalendarModalManager {
                     const reservationElement = findReservationElement(i);
                     reservationElement.classList.add('reserved');
                     reservationElement.setAttribute('data-reservationId', `${info.id}`);
-                    
+
                     if (i === convertedStartNumber) {
                         reservationElement.textContent = `${info.activity}`;
                     }
-                    if(count%2 === 0){ // 짝수번째 예약은 배경색을 다르게 한다.
+                    if (count % 2 === 0) { // 짝수번째 예약은 배경색을 다르게 한다.
                         reservationElement.style.backgroundColor = 'rgba(0,162,255,0.3)';
                     }
                     reservationElement.addEventListener('click', (e) => {
@@ -1393,7 +1386,6 @@ async function fetchData(api) {
         const json = await response.json();
         return json;
     } catch (error) {
-        console.error('Failed to fetch data', error);
         return [];
     }
 }
@@ -1670,30 +1662,50 @@ function setContentSectionBehavior(infiniteScrollManager) {
     }
 }
 
-function setPreventViewingSource(){
-    document.addEventListener('contextmenu', function(e) {
+function setPreventViewingSource() {
+    document.addEventListener('contextmenu', function (e) {
         e.preventDefault();
     });
-    document.addEventListener('keydown', function(e) {
+    document.addEventListener('keydown', function (e) {
         if (e.keyCode === 123) { // F12 : 개발자 도구 열기
             e.preventDefault();
         }
     });
     // 소스코드 단축키 막기
-    document.onkeydown = function(e) {
+    document.onkeydown = function (e) {
         if (e.ctrlKey && (e.keyCode === 85 || e.keyCode === 83 || e.keyCode === 123)) {
             return false;
         }
     };
     // mac 소스보기 단축키 막기
-    document.addEventListener('keydown', function(e) {
+    document.addEventListener('keydown', function (e) {
         if (e.keyCode === 85 && (navigator.platform.match('Mac') ? e.metaKey : e.ctrlKey)) {
             e.preventDefault();
         }
     });
 }
-function setResizeCalendarObserver(calendarManager){
+function setResizeCalendarObserver(calendarManager) {
     calendarManager.setCalendarResizeOberver();
+}
+
+function setPwaInstall(){
+    const pwaInstallIcon = document.querySelector(".addToHome");
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        pwaInstallIcon.addEventListener('click', (e) => {
+            deferredPrompt.prompt();
+            deferredPrompt.userChoice.then((choiceResult) => {
+                if (choiceResult.outcome === 'accepted') {
+                    // console.log('User accepted the A2HS prompt');
+                } else {
+                    // console.log('User dismissed the A2HS prompt');
+                }
+                deferredPrompt = null;
+            });
+        });
+    });
 }
 
 window.addEventListener("DOMContentLoaded", async function (event) {
@@ -1714,9 +1726,13 @@ window.addEventListener("DOMContentLoaded", async function (event) {
 
             setReservationModalEvent(calendarModalManager);
             setPreventViewingSource();
+            setPwaInstall();
             resizeSection();
             resizeVideo();
-            resizeNavigator();
+            resizeNavigator();            
+            initializePage(infiniteScrollManager).then(() => {
+                settingContentSectionHeight();
+            });
         });
 });
 
@@ -2082,11 +2098,11 @@ function settingContentSectionHeight() {
 }
 
 history.scrollRestoration = "manual"; // 뒤로가기 시 스크롤 위치를 유지하지 않음
-window.addEventListener("load", (e) => {
-    initializePage(infiniteScrollManager).then(() => {
-        settingContentSectionHeight();
-    });
-})
+// window.addEventListener("load", (e) => {
+//     initializePage(infiniteScrollManager).then(() => {
+//         settingContentSectionHeight();
+//     });
+// })
 
 function calculateValue(animationValues, scrollInSection, activedSectionHeight) {
     let returnValue = 0;
