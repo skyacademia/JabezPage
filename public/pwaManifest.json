@@ -1,0 +1,28 @@
+{
+    "name": "야베스 그룹",
+    "short_name": "야베스 그룹",
+    "description": "안녕하세요. 세계로 나가는 야베스 그룹입니다.",
+    "start_url": "/",
+    "display": "browser",
+    "background_color": "#ffffff",
+    "theme_color": "#ffffff",
+    "icons": [
+        {
+            "src": "./img/icon_192x192.png",
+            "type": "image/png",
+            "sizes": "192x192"
+        },
+        {
+            "src": "./img/icon_512x512.png",
+            "type": "image/png",
+            "sizes": "512x512"
+        }
+    ],
+    "scope": "/",
+    "orientation": "any",
+    "prefer_related_applications": false,
+    "related_applications": [],
+    "dir": "auto",
+    "lang": "ko",
+    "categories": ["business","food"]
+}
