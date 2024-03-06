@@ -252,13 +252,16 @@ class CalendarManager {
         const day = parseInt(dateArray[2]);
         const today = new Date();
 
-        // 이전 달이면 prev, 다음 달이면 next, 현재 달이면 today의 calendar에서 찾아서 반환
+        // 이전 달이면 prev, 다음 달이면 next, 현재 달이면 today의 calendar에서 찾아서 반환(만약에 다다음 달의 일정인 경우 api로 받아와야함)
         if (year < today.getFullYear() || (year === today.getFullYear() && month < today.getMonth() + 1)) {
             return this.calendar['prev'].getCalendarReservationInfo(day);
         } else if (year > today.getFullYear() || (year === today.getFullYear() && month > today.getMonth() + 1)) {
             return this.calendar['next'].getCalendarReservationInfo(day);
-        } else {
+        } else if(year === today.getFullYear() && month === today.getMonth() + 1) {
             return this.calendar['today'].getCalendarReservationInfo(day);
+        }
+        else {
+            return this.getReservationDate(year, month, day);
         }
     }
     getCalendarDate() {
@@ -273,6 +276,11 @@ class CalendarManager {
         for (let type in this.calendar) {
             this.calendar[type].setupCalendar();
         }
+    }
+    // 다다음 달의 일정을 받아오는 함수
+    getReservationDate(year, month, day) {
+        const data = fetchData(`/api/reservation/get/${year}/${month}/${day}`);
+        return data;
     }
 }
 
@@ -558,9 +566,33 @@ class CalendarModalManager {
 
         // modal-body 생성
         const modalBody = createElement('div', { classList: ['modal-body'], style: 'width: 100%' });
+
+        const switchDiv = createElement('div', { classList: ['form-check', 'form-switch', 'form-check', 'mb-3'] });
+        const switchInput = createElement('input', { classList: ['form-check-input'], type: 'checkbox', id: 'reservationSwitch', role: 'switch' });
+        const switchLabel = createElement('label', { classList: ['form-check-label'], for: 'reservationSwitch' }, ['반복 예약 하기']);
+        switchInput.addEventListener('change', (e) => {
+            const checkbox = e.target;
+            const repeatDateDiv = reservationForm.querySelector('.repeat-date');
+            checkbox.checked ? repeatDateDiv.classList.remove('d-none') : repeatDateDiv.classList.add('d-none');
+        });
+        switchDiv.appendChild(switchInput);
+        switchDiv.appendChild(switchLabel);
+
         const reservationForm = createElement('form', { action: '/api/reservation/create', method: 'post', id: 'reservationForm' });
 
-        const dateInput = createElement('input', { id: 'dateInput', type: 'hidden', name: 'reservationDate', value: '' });
+        // const dateInput = createElement('input', { id: 'dateInput', type: 'hidden', name: 'reservationDate', value: '' });
+        const dateDiv = createElement('div', { classList: ['mb-3'] });
+        const dateLabel = createElement('label', { for: 'dateInput', classList: ['form-label'] }, ['날짜']);
+        const dateInput = createElement('input', {classList:['form-control'], id: 'dateInput', type: 'date', name: 'reservationDate' });
+        dateInput.readOnly = true;
+        dateDiv.appendChild(dateLabel);
+        dateDiv.appendChild(dateInput);
+        
+        const repeatDateDiv = createElement('div', { classList: ['mb-3', 'repeat-date', 'd-none'] });
+        const repeatDateLabel = createElement('p', { classList: ['repeat-date-title', 'mb-3'] }, ['반복 날짜']);
+        const repeatDateRowDiv = createElement('div', { classList: ['mb-3','repeat-date-row', 'row', 'row-cols-2'] });
+        repeatDateDiv.appendChild(repeatDateLabel);        
+        repeatDateDiv.appendChild(repeatDateRowDiv);
 
         const activityDiv = createElement('div', { classList: ['mb-3'] });
         const activityLabel = createElement('label', { for: 'activityInput', classList: ['form-label'] }, ['활동명']);
@@ -605,13 +637,16 @@ class CalendarModalManager {
         passwordDiv.appendChild(passwordLabel);
         passwordDiv.appendChild(passwordInput);
 
-        reservationForm.appendChild(dateInput);
+        reservationForm.appendChild(dateDiv);
+        reservationForm.appendChild(repeatDateDiv);
         reservationForm.appendChild(activityDiv);
         reservationForm.appendChild(timeSelectDiv);
         reservationForm.appendChild(nameDiv);
         reservationForm.appendChild(passwordDiv);
         setReservatationFormFill(reservationForm);
         setReservationFormSubmit(reservationForm);
+
+        modalBody.appendChild(switchDiv);
         modalBody.appendChild(reservationForm);
 
         // modal-footer 생성
@@ -627,29 +662,61 @@ class CalendarModalManager {
             const startSelect = form.querySelector('#startTimeSelect');
             const endSelect = form.querySelector('#endTimeSelect');
             const reservationDate = form.querySelector('#dateInput');
+            const repeatDateInputRowDiv = form.querySelector('.repeat-date-row');
 
             const selectedReservationTime = _this.getSelectedReservationTime();
             const dateData = _this.getReservationDate();
 
             dateData.month = dateData.month < 10 ? `0${dateData.month}` : dateData.month;
             const formattedReservationDate = `${dateData.year}-${dateData.month}-${parseInt(dateData.date) < 10 ? `0${dateData.date}` : dateData.date}`;
-
+            
             const startTimeNumber = parseInt(selectedReservationTime[0]);
             const endTimeNumber = parseInt(selectedReservationTime[selectedReservationTime.length - 1]) + 1;
 
             const formattedStartTime = startTimeNumber + 8 < 10 ? `0${startTimeNumber + 8}:00` : `${startTimeNumber + 8}:00`;
             const formattedEndTime = endTimeNumber + 8 < 10 ? `0${endTimeNumber + 8}:00` : `${endTimeNumber + 8}:00`;
 
+            const repeatDateInputList = createRepeatDateInput(dateData);
+            repeatDateInputList.forEach((repeatDateInput) => {
+                repeatDateInputRowDiv.appendChild(repeatDateInput);
+            });
+
             reservationDate.value = formattedReservationDate;
+            reservationDate.min = formattedReservationDate;
+            reservationDate.max = formattedReservationDate;
             startSelect.querySelector(`option[value="${formattedStartTime}"]`).selected = true;
             endSelect.querySelector(`option[value="${formattedEndTime}"]`).selected = true;
+
+
+
+            function createRepeatDateInput(dateData) {
+                const reservationDate = dateData;
+                const nextMonthDate = new Date(reservationDate.year, parseInt(reservationDate.month) + 1, 0);
+                const repeatDateList = [];
+                let changeDate = new Date(reservationDate.year, parseInt(reservationDate.month)-1, reservationDate.date+7); // 다음 주로 변경
+                let index = 1;
+                while(changeDate <= nextMonthDate) {
+                    const formattedChangeDate = `${changeDate.getFullYear()}-${changeDate.getMonth() + 1 < 10 ? `0${changeDate.getMonth() + 1}` : changeDate.getMonth() + 1}-${changeDate.getDate() < 10 ? `0${changeDate.getDate()}` : changeDate.getDate()}`;
+                    const repeatDateDiv = createElement('div', { classList: ['mb-3', 'container', 'repeat-date','form-check', 'col',] });
+                    const repeatDateInput = createElement('input', { type: 'checkbox', classList: ['form-check-input'], id: `repeatDateInput-${index}`, name: 'repeatReservationDate', value : formattedChangeDate});
+                    const repeatDateLabel = createElement('label', { for: `repeatDateInput-${index}`, classList: ['form-check-label'] }, [formattedChangeDate]);
+                    repeatDateDiv.appendChild(repeatDateInput);
+                    repeatDateDiv.appendChild(repeatDateLabel);
+                    repeatDateList.push(repeatDateDiv);
+                    changeDate = new Date(changeDate.setDate(changeDate.getDate() + 7));
+                    index++;
+                }
+                return repeatDateList;
+            }    
         }
+            
         function setReservationFormSubmit(form) {
             form.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const form = e.target;
                 const formData = new FormData(form);
                 const reservationDate = formData.get('reservationDate');
+                const repeatReservationDate = formData.getAll('repeatReservationDate');
                 const startTime = formData.get('startTime');
                 const endTime = formData.get('endTime');
                 const password = formData.get('password');
@@ -717,8 +784,18 @@ class CalendarModalManager {
                     return;
                 }
 
+                if (repeatReservationDate.length > 0) {
+                    for(let i = 0; i < repeatReservationDate.length; i++) {
+                        if (_this.checkReservationTimeForCreate(repeatReservationDate[i], startTime, endTime)) {
+                            alert('예약이 불가능한 시간입니다. 시간을 다시 한 번 확인해주세요.');
+                            return;
+                        }
+                    }
+                }
+
                 const reservationInfo = {
                     reservationDate: reservationDate,
+                    repeatReservationDate: repeatReservationDate,
                     startTime: startTime,
                     endTime: endTime,
                     activity: activity,
@@ -1082,7 +1159,7 @@ class CalendarModalManager {
         const reservationInfo = calendarManager.getCalendarReservationInfoByDate(date);
 
         // 예약이 불가능한 시간인지 확인
-        const isOverlap = this.checkReservationTime(newReservationTime, reservationInfo);
+        const isOverlap = reservationInfo.length > 0 ? this.checkReservationTime(newReservationTime, reservationInfo) : false;
         return isOverlap;
     }
     checkReservationTimeForUpdate(reservationId, date, startTime, endTime) {
@@ -1105,8 +1182,8 @@ class CalendarModalManager {
         const reservationModalBody = reservationModal.querySelector('.modal-body');
         const reservationArea = reservationModalBody.querySelector('.reservation-area');
 
-
         reservationModal.addEventListener('show.bs.modal', (event) => {
+            _this.resetReservationData();
             reservationModalContent.replaceChildren(...this.createTimeTable());
             reservationModalContent.querySelector('.modal-footer').querySelector('.reservationButton').addEventListener('click', (e) => {
                 reservationModalContent.replaceChildren(...this.createReservationForm());

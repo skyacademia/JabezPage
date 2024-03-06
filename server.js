@@ -684,7 +684,7 @@ app.post('/api/content/delete', (req, res) => {
 app.get('/api/reservation/get/:year/:month', (req, res) => {
   const year = req.params.year;
   const month = req.params.month;
-  const yearMonthString = year + '-' + month + '%';
+  const yearMonthDayString = year + '-' + month + '%';
   let db = new sqlite3.Database('./database/Jabez_database.db', sqlite3.OPEN_READONLY, (err) => {
     if (err) {
       console.error(err.message);
@@ -694,7 +694,39 @@ app.get('/api/reservation/get/:year/:month', (req, res) => {
   }
   );
   // 데이터베이스에서 데이터를 가져온 뒤 데이터를 전송
-  db.all('SELECT * FROM reservation_Information_tbl WHERE startDateTime LIKE ? ORDER BY startDateTime ASC', yearMonthString, (err, rows) => {
+  db.all('SELECT * FROM reservation_Information_tbl WHERE startDateTime LIKE ? ORDER BY startDateTime ASC', yearMonthDayString, (err, rows) => {
+    if (err) {
+      console.error(err.message);
+    } else {
+      console.log('Query successfully executed.');
+      res.send(rows);
+    }
+  });
+  // 데이터베이스 연결 종료
+  db.close((err) => {
+    if (err) {
+      console.error(err.message);
+    } else {
+      console.log('Close the database connection.');
+    }
+  }
+  );
+});
+app.get('/api/reservation/get/:year/:month/:day', (req, res) => {
+  const year = req.params.year;
+  const month = req.params.month;
+  const day = req.params.day;
+  const yearMonthDayString = year + '-' + month < 10 ? `0${month}` : month  + '-' + day < 10 ? `0${day}` : day + '%';
+  let db = new sqlite3.Database('./database/Jabez_database.db', sqlite3.OPEN_READONLY, (err) => {
+    if (err) {
+      console.error(err.message);
+    } else {
+      console.log('Connected to the database.');
+    }
+  }
+  );
+  // 데이터베이스에서 데이터를 가져온 뒤 데이터를 전송
+  db.all('SELECT * FROM reservation_Information_tbl WHERE startDateTime LIKE ? ORDER BY startDateTime ASC', yearMonthDayString, (err, rows) => {
     if (err) {
       console.error(err.message);
     } else {
@@ -713,13 +745,16 @@ app.get('/api/reservation/get/:year/:month', (req, res) => {
   );
 });
 
+
 app.post('/api/reservation/create', (req, res) => {
   const reservationDate = req.body.reservationDate;
+  const repeatReservationDate = req.body.repeatReservationDate;
   const activity = req.body.activity;
   const startTime = req.body.startTime;
   const endTime = req.body.endTime;
   const name = req.body.reservationPerson;
   const password = req.body.password;
+
 
   let db = new sqlite3.Database('./database/Jabez_database.db', sqlite3.OPEN_READWRITE, (err) => {
     if (err) {
@@ -729,46 +764,67 @@ app.post('/api/reservation/create', (req, res) => {
     }
   });
 
-  const sqlSelectQuery = `SELECT * FROM reservation_Information_tbl WHERE startDateTime LIKE ?`;
-  db.all(sqlSelectQuery, `${reservationDate}%`, (err, rows) => {
+  // 데이터베이스에서 예약된 시간을 가져와서 겹치는지 확인
+  const dateArray = repeatReservationDate.length > 0 ? [reservationDate,...repeatReservationDate] : [reservationDate];
+  const placeholders = dateArray.map(() => '?').join(', ');
+  
+  const sqlSelectQuery = `SELECT * FROM reservation_Information_tbl WHERE DATE(startDateTime) in (${placeholders}) ORDER BY DATE(startDateTime) ASC`;
+  db.all(sqlSelectQuery, placeholders, (err, rows) => {
+    const rowInfo = {};
     if (err) {
       console.error(err.message);
     } else {
       if (rows.length > 0) {
-        const newStartTime = startTime.split(':')[0];
-        const newEndTime = endTime.split(':')[0];
-
         rows.forEach((row) => {
-          const startTime = row.startDateTime.split(' ')[1].split(':')[0];
-          const endTime = row.endDateTime.split(' ')[1].split(':')[0];
-
-          // 예약 시작 시간이 이미 예약된 시간과 겹치는지 확인
-          if (newStartTime >= startTime && newStartTime < endTime) {
-            console.log('예약 시작 시간이 이미 예약된 시간과 겹칩니다.');
-            res.send({ success: false, message: '이미 예약된 시간입니다.' });
+          if(rowInfo.keys().includes(row.startDateTime.split(' ')[0])){ // rowInfo에 해당 날짜가 이미 존재하는 경우
+            rowInfo[row.startDateTime.split(' ')[0]].push({startTime: row.startDateTime.split(' ')[1].split(':')[0], endTime: row.endDateTime.split(' ')[1].split(':')[0]});
+          }else{ // rowInfo에 해당 날짜가 존재하지 않는 경우
+            rowInfo[row.startDateTime.split(' ')[0]] = [{startTime: row.startDateTime.split(' ')[1].split(':')[0], endTime: row.endDateTime.split(' ')[1].split(':')[0]}];
           }
-          // 예약 종료 시간이 이미 예약된 시간과 겹치는지 확인
-          if (newEndTime > startTime && newEndTime <= endTime) {
-            console.log('예약 종료 시간이 이미 예약된 시간과 겹칩니다.');
-            res.send({ success: false, message: '이미 예약된 시간입니다.' });
-          }
-          // 예약 시작 시간과 종료 시간이 이미 예약된 시간을 포함하는지 확인
-          if (newStartTime < startTime && newEndTime >= endTime) {
-            console.log('예약 시간이 이미 예약된 시간을 포함합니다.');
-            res.send({ success: false, message: '이미 예약된 시간입니다.' });
+        });
+        
+        // 날짜별로 예약 시작 시간과 종료 시간이 이미 예약된 시간과 겹치는지 확인
+        dateArray.forEach((date) => {
+          if(rowInfo.keys().includes(date)){
+            const newStartTime = startTime.split(':')[0];
+            const newEndTime = endTime.split(':')[0];
+            rowInfo[date].forEach((row) => {
+              const startTime = row.startDateTime.split(' ')[1].split(':')[0];
+              const endTime = row.endDateTime.split(' ')[1].split(':')[0];
+              // 예약 시작 시간이 이미 예약된 시간과 겹치는지 확인
+              if (newStartTime >= startTime && newStartTime < endTime) {
+                console.log('예약 시작 시간이 이미 예약된 시간과 겹칩니다.');
+                res.send({ success: false, message: '이미 예약된 시간입니다.' });
+              }
+              // 예약 종료 시간이 이미 예약된 시간과 겹치는지 확인
+              if (newEndTime > startTime && newEndTime <= endTime) {
+                console.log('예약 종료 시간이 이미 예약된 시간과 겹칩니다.');
+                res.send({ success: false, message: '이미 예약된 시간입니다.' });
+              }
+              // 예약 시작 시간과 종료 시간이 이미 예약된 시간을 포함하는지 확인
+              if (newStartTime < startTime && newEndTime >= endTime) {
+                console.log('예약 시간이 이미 예약된 시간을 포함합니다.');
+                res.send({ success: false, message: '이미 예약된 시간입니다.' });
+              }
+            });
           }
         });
       }
 
       // 데이터베이스에 데이터를 추가
-      const formattedStartDateTime = reservationDate + " " + startTime + ':00';
-      const formattedEndDateTime = reservationDate + " " + endTime + ':00';
-      const encryptedPasswordAndSalt = encryptPassword(password);
-      const encryptedPassword = encryptedPasswordAndSalt[0];
-      const salt = encryptedPasswordAndSalt[1];
+      const insertPlaceholders = dateArray.map(() => '(?,?,?,?,?,?)').join(', '); // 데이터베이스에 추가할 데이터를 담을 변수
+      const insertDataArray = []; // 데이터베이스에 추가할 데이터를 담을 배열
+      for (let i = 0; i < dateArray.length; i++) {
+        const formattedStartDateTime = dateArray[i] + " " + startTime + ':00';
+        const formattedEndDateTime = dateArray[i] + " " + endTime + ':00';
+        const encryptedPasswordAndSalt = encryptPassword(password);
+        const encryptedPassword = encryptedPasswordAndSalt[0];
+        const salt = encryptedPasswordAndSalt[1];
+        insertDataArray.push(activity, formattedStartDateTime, formattedEndDateTime, name, encryptedPassword, salt);
+      }
 
-      const sqlInsertQuery = `INSERT INTO reservation_Information_tbl (activity, startDateTime, endDateTime, reservationPerson, password, salt) VALUES (?,?,?,?,?,?)`;
-      db.run(sqlInsertQuery, [activity, formattedStartDateTime, formattedEndDateTime, name, encryptedPassword, salt], (err) => {
+      const sqlInsertQuery = `INSERT INTO reservation_Information_tbl (activity, startDateTime, endDateTime, reservationPerson, password, salt) VALUES ${insertPlaceholders}`;
+      db.run(sqlInsertQuery, insertDataArray, (err) => {
         if (err) {
           console.error(err.message);
         } else {
