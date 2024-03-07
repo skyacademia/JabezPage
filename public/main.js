@@ -214,8 +214,14 @@ class CalendarManager {
         this.calendarArray.forEach((type) => {
             if (this.calendarArray.indexOf(type) == this.calendarIndex) {
                 handleClassList(this.calendar[type].getCalendar(), 'show', 'hide')
+                if(isMobile == true){
+                    this.calendar[type].getCalendar().querySelector('.calendar-body-area .calendar-reservations').classList.remove('d-none');
+                }
             } else {
                 handleClassList(this.calendar[type].getCalendar(), 'hide', 'show')
+                if(isMobile == true){
+                    this.calendar[type].getCalendar().querySelector('.calendar-body-area .calendar-reservations').classList.add('d-none');
+                }
             }
         });
     }
@@ -225,9 +231,15 @@ class CalendarManager {
         this.calendarArea.style.transform = `translateX(${calendarWidth * ((this.calendarIndex * -1) + 1)}px)`;
         this.calendarArray.forEach((type) => {
             if (this.calendarArray.indexOf(type) == this.calendarIndex) {
-                handleClassList(this.calendar[type].getCalendar(), 'show', 'hide')
+                handleClassList(this.calendar[type].getCalendar(), 'show', 'hide');
+                if(isMobile == true){
+                    this.calendar[type].getCalendar().querySelector('.calendar-body-area .calendar-reservations').classList.remove('d-none');
+                }
             } else {
-                handleClassList(this.calendar[type].getCalendar(), 'hide', 'show')
+                handleClassList(this.calendar[type].getCalendar(), 'hide', 'show');
+                if(isMobile == true){
+                    this.calendar[type].getCalendar().querySelector('.calendar-body-area .calendar-reservations').classList.add('d-none');
+                }
             }
         });
     }
@@ -257,7 +269,7 @@ class CalendarManager {
             return this.calendar['prev'].getCalendarReservationInfo(day);
         } else if (year > today.getFullYear() || (year === today.getFullYear() && month > today.getMonth() + 1)) {
             return this.calendar['next'].getCalendarReservationInfo(day);
-        } else if(year === today.getFullYear() && month === today.getMonth() + 1) {
+        } else if (year === today.getFullYear() && month === today.getMonth() + 1) {
             return this.calendar['today'].getCalendarReservationInfo(day);
         }
         else {
@@ -312,6 +324,8 @@ class Calendar {
             this.createCalendar();
             this.deleteBlackWeek();
             this.markDate();
+            this.createMobileReservation();
+            this.setMobileCalendar();
         });
     }
 
@@ -361,6 +375,99 @@ class Calendar {
             }
         }
     }
+    createMobileReservation() {
+        if (isMobile !== true) { return; }
+        const calendarBody = this.calendar.querySelector('.calendar-body-area');
+        const calendarReservationDiv = createElement('div', { classList: ['calendar-reservations','d-none'], style: { padding: '0.25rem' } });
+        const reservationInfoDiv = createElement('div', { classList: ['reservation-info'], style: { padding: '0.25rem' } });
+        const reservationInfoTitleDiv = createElement('div', { classList: ['reservation-info-title-area'] });
+        const reservationInfoTitle = createElement('h6', { classList: ['reservation-info-title'], style: { display: 'inline' } }, ['예약 정보']);
+        const reservationInfoTitleAddButton = createElement("i", { classList: ['bi', 'bi-plus-lg', 'reservation-info-add-button'], style: { float: 'right', cursor: 'pointer' }, 'data-bs-toggle': 'modal', 'data-bs-target': '#reservationModal' });
+
+        const reservationInfoDayDiv = createElement('div', { classList: ['reservation-info-day'] });
+        const reservationInfoDayTitle = createElement('p', { classList: ['reservation-info-day-title'] });
+        const reservationInfoListDiv = createElement('ul', { classList: ['reservation-info-list', 'list-group'] });
+
+        reservationInfoTitleDiv.appendChild(reservationInfoTitle);
+        reservationInfoTitleDiv.appendChild(reservationInfoTitleAddButton);
+        reservationInfoDayDiv.appendChild(reservationInfoDayTitle);
+        reservationInfoDiv.appendChild(reservationInfoDayDiv);
+
+        reservationInfoDiv.appendChild(reservationInfoTitleDiv);
+        reservationInfoDiv.appendChild(reservationInfoDayDiv);
+        reservationInfoDiv.appendChild(reservationInfoListDiv);
+        calendarReservationDiv.appendChild(reservationInfoDiv);
+        calendarBody.appendChild(calendarReservationDiv);
+    }
+    setMobileCalendar() {
+        if (isMobile !== true) { return; } // 모바일이 아니면 실행하지 않음
+
+        const calendarBodyArea = this.calendar.querySelector('.calendar-body-area');
+        const calendarDay = calendarBodyArea.querySelector('.calendar-days');
+        const weeks = calendarDay.querySelectorAll('.week');
+        const _this = this;
+
+        // 날짜 높이 조절
+        weeks.forEach((week) => {
+            week.querySelectorAll('.date').forEach((date) => {
+                date.style.height = '5vh';
+            });
+        });
+
+        // 날짜의 dataset 일부 삭제(모달 이동 방지)
+        weeks.forEach((week) => {
+            week.querySelectorAll('.date').forEach((date) => {
+                date.removeAttribute('data-bs-toggle');
+                date.removeAttribute('data-bs-target');
+                date.removeAttribute('data-bs-date');
+            });
+        });
+
+        // 날짜 클릭 시 예약 정보 표시
+        weeks.forEach((week) => {
+            week.querySelectorAll('.date').forEach((date) => {
+                date.addEventListener('click', (e) => {
+                    const dateData = date.getAttribute('data-date');
+                    const reservationInfo = _this.getCalendarReservationInfo(dateData); // 클래스에서 예약 정보 가져오기
+                    const yearMonth = _this.getCalendarDate(); // 클래스에서 년,월 가져오기
+
+                    const calendarBodyArea = _this.calendar.querySelector('.calendar-body-area');
+                    const calendarReservationDiv = calendarBodyArea.querySelector('.calendar-reservations');
+                    const reservationInfoDiv = calendarReservationDiv.querySelector('.reservation-info');
+                    const reservationInfoListDiv = reservationInfoDiv.querySelector('.reservation-info-list');
+                    const reservationInfoDayDiv = reservationInfoDiv.querySelector('.reservation-info-day');
+
+                    calendarReservationDiv.classList.remove('d-none');
+
+                    // 날짜 변경
+                    const reservationInfoDay = createElement('p', { classList: ['reservation-info-day-title'] }, [`${yearMonth.year}년 ${yearMonth.month}월 ${dateData}일`]);
+                    reservationInfoDayDiv.replaceChildren(reservationInfoDay);
+
+                    // 추가 버튼에 선택한 날짜 추가
+                    calendarReservationDiv.querySelector('.reservation-info-add-button').setAttribute('data-bs-date', `${dateData}`);
+
+                    reservationInfoListDiv.replaceChildren(); // 예약 정보 영역 초기화
+                    if (reservationInfo.length === 0) {
+                        const noReservationInfo = createElement('p', { classList: ['no-reservation-info', 'text-center'] }, ['예약 정보가 없습니다.']);
+                        reservationInfoListDiv.appendChild(noReservationInfo);
+                    } // 문구 추가
+                    // 예약 정보가 있으면 예약 정보 추가
+                    reservationInfo.forEach((reservation) => {
+                        const reservationInfo = createElement('li', { classList: ['reservation-info-item', 'list-group-item'] }, [`${reservation.startDateTime.split(' ')[1].split(':')[0]}:${reservation.startDateTime.split(' ')[1].split(':')[1]}~${reservation.endDateTime.split(' ')[1].split(':')[0]}:${reservation.endDateTime.split(' ')[1].split(':')[1]} ${reservation.activity}`]);
+                        reservationInfo.setAttribute('data-bs-toggle', 'modal');
+                        reservationInfo.setAttribute('data-bs-target', '#reservationModal');
+                        reservationInfo.setAttribute('data-bs-date', dateData);
+                        reservationInfo.setAttribute('data-bs-reservationId', reservation.id);
+                        reservationInfoListDiv.appendChild(reservationInfo);
+                    });
+                });
+                if(date.classList.contains('today')){
+                    date.click();
+                }
+            });
+        });
+    }
+
     setDefaultDayReservation() {
         for (let i = 1; i <= this.lastDay; i++) {
             this.dayReservation[i] = [];
@@ -388,6 +495,7 @@ class Calendar {
             });
         }
     }
+    // 달 마지막 주가 비어있으면 삭제
     deleteBlackWeek() {
         const lastWeek = this.days.querySelector('.week:last-child')
         if (lastWeek.querySelector('.date:first-child').textContent === '') {
@@ -583,15 +691,15 @@ class CalendarModalManager {
         // const dateInput = createElement('input', { id: 'dateInput', type: 'hidden', name: 'reservationDate', value: '' });
         const dateDiv = createElement('div', { classList: ['mb-3'] });
         const dateLabel = createElement('label', { for: 'dateInput', classList: ['form-label'] }, ['날짜']);
-        const dateInput = createElement('input', {classList:['form-control'], id: 'dateInput', type: 'date', name: 'reservationDate' });
+        const dateInput = createElement('input', { classList: ['form-control'], id: 'dateInput', type: 'date', name: 'reservationDate' });
         dateInput.readOnly = true;
         dateDiv.appendChild(dateLabel);
         dateDiv.appendChild(dateInput);
-        
+
         const repeatDateDiv = createElement('div', { classList: ['mb-3', 'repeat-date', 'd-none'] });
         const repeatDateLabel = createElement('p', { classList: ['repeat-date-title', 'mb-3'] }, ['반복 날짜']);
-        const repeatDateRowDiv = createElement('div', { classList: ['mb-3','repeat-date-row', 'row', 'row-cols-2'] });
-        repeatDateDiv.appendChild(repeatDateLabel);        
+        const repeatDateRowDiv = createElement('div', { classList: ['mb-3', 'repeat-date-row', 'row', 'row-cols-2'] });
+        repeatDateDiv.appendChild(repeatDateLabel);
         repeatDateDiv.appendChild(repeatDateRowDiv);
 
         const activityDiv = createElement('div', { classList: ['mb-3'] });
@@ -669,7 +777,7 @@ class CalendarModalManager {
 
             dateData.month = dateData.month < 10 ? `0${dateData.month}` : dateData.month;
             const formattedReservationDate = `${dateData.year}-${dateData.month}-${parseInt(dateData.date) < 10 ? `0${dateData.date}` : dateData.date}`;
-            
+
             const startTimeNumber = parseInt(selectedReservationTime[0]);
             const endTimeNumber = parseInt(selectedReservationTime[selectedReservationTime.length - 1]) + 1;
 
@@ -693,12 +801,12 @@ class CalendarModalManager {
                 const reservationDate = dateData;
                 const nextMonthDate = new Date(reservationDate.year, parseInt(reservationDate.month) + 1, 0);
                 const repeatDateList = [];
-                let changeDate = new Date(reservationDate.year, parseInt(reservationDate.month)-1, reservationDate.date+7); // 다음 주로 변경
+                let changeDate = new Date(reservationDate.year, parseInt(reservationDate.month) - 1, reservationDate.date + 7); // 다음 주로 변경
                 let index = 1;
-                while(changeDate <= nextMonthDate) {
+                while (changeDate <= nextMonthDate) {
                     const formattedChangeDate = `${changeDate.getFullYear()}-${changeDate.getMonth() + 1 < 10 ? `0${changeDate.getMonth() + 1}` : changeDate.getMonth() + 1}-${changeDate.getDate() < 10 ? `0${changeDate.getDate()}` : changeDate.getDate()}`;
-                    const repeatDateDiv = createElement('div', { classList: ['mb-3', 'container', 'repeat-date','form-check', 'col',] });
-                    const repeatDateInput = createElement('input', { type: 'checkbox', classList: ['form-check-input'], id: `repeatDateInput-${index}`, name: 'repeatReservationDate', value : formattedChangeDate});
+                    const repeatDateDiv = createElement('div', { classList: ['mb-3', 'container', 'repeat-date', 'form-check', 'col',] });
+                    const repeatDateInput = createElement('input', { type: 'checkbox', classList: ['form-check-input'], id: `repeatDateInput-${index}`, name: 'repeatReservationDate', value: formattedChangeDate });
                     const repeatDateLabel = createElement('label', { for: `repeatDateInput-${index}`, classList: ['form-check-label'] }, [formattedChangeDate]);
                     repeatDateDiv.appendChild(repeatDateInput);
                     repeatDateDiv.appendChild(repeatDateLabel);
@@ -707,9 +815,9 @@ class CalendarModalManager {
                     index++;
                 }
                 return repeatDateList;
-            }    
+            }
         }
-            
+
         function setReservationFormSubmit(form) {
             form.addEventListener('submit', async (e) => {
                 e.preventDefault();
@@ -785,7 +893,7 @@ class CalendarModalManager {
                 }
 
                 if (repeatReservationDate.length > 0) {
-                    for(let i = 0; i < repeatReservationDate.length; i++) {
+                    for (let i = 0; i < repeatReservationDate.length; i++) {
                         if (_this.checkReservationTimeForCreate(repeatReservationDate[i], startTime, endTime)) {
                             alert('예약이 불가능한 시간입니다. 시간을 다시 한 번 확인해주세요.');
                             return;
@@ -1175,49 +1283,16 @@ class CalendarModalManager {
         return isOverlap;
     }
 
-    setReservationModal() {
-        const _this = this;
-        const reservationModal = document.getElementById('reservationModal');
-        const reservationModalContent = reservationModal.querySelector('.modal-content');
-        const reservationModalBody = reservationModal.querySelector('.modal-body');
-        const reservationArea = reservationModalBody.querySelector('.reservation-area');
-
-        reservationModal.addEventListener('show.bs.modal', (event) => {
-            _this.resetReservationData();
-            reservationModalContent.replaceChildren(...this.createTimeTable());
-            reservationModalContent.querySelector('.modal-footer').querySelector('.reservationButton').addEventListener('click', (e) => {
-                reservationModalContent.replaceChildren(...this.createReservationForm());
-            });
-            const reservationModalTitle = reservationModalContent.querySelector('.modal-title');
-            const date = event.relatedTarget.getAttribute('data-bs-date')
-            const yearMonthInfo = calendarManager.getCalendarDate();
-            const dateReservationInfo = calendarManager.getCalendarReservationInfo(date);
-            this.setReservationInfo([...dateReservationInfo]);
-            this.setReservationDate({ year: yearMonthInfo.year, month: yearMonthInfo.month, date: parseInt(date) });
-            this.setIsPast(this.findIsPast(this.getReservationDate()));
-            reservationModalTitle.textContent = `${yearMonthInfo.year}년 ${yearMonthInfo.month}월 ${date}일 예약 현황`;
-            setReservationInfoElement(reservationModalContent, dateReservationInfo);
+    setTimeTable(reservationModalContent, dateReservationInfo) {
+        reservationModalContent.replaceChildren(...this.createTimeTable());
+        reservationModalContent.querySelector('.modal-footer').querySelector('.reservationButton').addEventListener('click', (e) => {
+            reservationModalContent.replaceChildren(...this.createReservationForm());
         });
-        // reservationModal.addEventListener('hidden.bs.modal', (event) => {
-        //     const reservationModalBody = reservationModal.querySelector('.modal-body');
-        //     const reservationModalTitle = reservationModal.querySelector('.modal-title');
-        //     const reservationArea = reservationModalBody.querySelector('.reservation-area');
-        //     reservationArea.querySelectorAll('div[class*="reservation"]').forEach((reservation) => {
-        //         Array.from(reservation.classList).forEach((className) => {
-        //             if (className !== 'reservation' && className !== 'reservation-division' && className !== 'border-top') {
-        //                 reservation.classList.remove(className);
-        //             }
-        //         });
-        //         Array.from(reservation.attributes).forEach((attr) => {
-        //             if (attr.name !== 'class' && attr.name !== 'data-number') {
-        //                 reservation.removeAttribute(attr.name);
-        //             }
-        //         });
-        //         reservation.textContent = '';
-        //     });
-        //     this.resetReservationData();
-        //     reservationModalTitle.textContent = '예약현황';
-        // });
+        const dateInfo = this.getReservationDate();
+
+        const reservationModalTitle = reservationModalContent.querySelector('.modal-title');
+        reservationModalTitle.textContent = `${dateInfo.year}년 ${dateInfo.month}월 ${dateInfo.date}일 예약 현황`;
+        setReservationInfoElement(reservationModalContent, dateReservationInfo);
 
         function setReservationInfoElement(reservationModalContent, reservationInfo) {
             let count = 0;
@@ -1259,6 +1334,31 @@ class CalendarModalManager {
             const reservationArea = document.getElementById('reservationModal').querySelector('.reservation-area');
             return reservationArea.querySelector(`div[data-number='${timeNumber}']`);
         }
+    }
+
+    setReservationModal() {
+        const _this = this;
+        const reservationModal = document.getElementById('reservationModal');
+        const reservationModalContent = reservationModal.querySelector('.modal-content');
+        const reservationModalBody = reservationModal.querySelector('.modal-body');
+        const reservationArea = reservationModalBody.querySelector('.reservation-area');
+
+        reservationModal.addEventListener('show.bs.modal', (event) => {
+            _this.resetReservationData();
+            const date = event.relatedTarget.getAttribute('data-bs-date')
+            const reservationInfoId = event.relatedTarget.getAttribute('data-bs-reservationId');
+            const yearMonthInfo = calendarManager.getCalendarDate();
+            const dateReservationInfo = calendarManager.getCalendarReservationInfo(date);
+            this.setReservationInfo([...dateReservationInfo]);
+            this.setReservationDate({ year: yearMonthInfo.year, month: yearMonthInfo.month, date: parseInt(date) });
+            this.setIsPast(this.findIsPast(this.getReservationDate()));
+
+            if (reservationInfoId) {
+                reservationModalContent.replaceChildren(..._this.createReservationAuthForm(reservationInfoId));
+            } else {
+                this.setTimeTable(reservationModalContent, dateReservationInfo);
+            }
+        });
     }
 }
 
@@ -1765,7 +1865,7 @@ function setResizeCalendarObserver(calendarManager) {
     calendarManager.setCalendarResizeOberver();
 }
 
-function setPwaInstall(){
+function setPwaInstall() {
     const pwaInstallIcon = document.querySelector(".addToHome");
     let deferredPrompt;
     window.addEventListener('beforeinstallprompt', (e) => {
@@ -1806,7 +1906,7 @@ window.addEventListener("DOMContentLoaded", async function (event) {
             setPwaInstall();
             resizeSection();
             resizeVideo();
-            resizeNavigator();            
+            resizeNavigator();
             initializePage(infiniteScrollManager).then(() => {
                 settingContentSectionHeight();
             });
