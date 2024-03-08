@@ -1289,6 +1289,7 @@ class CalendarModalManager {
             reservationModalContent.replaceChildren(...this.createReservationForm());
         });
         const dateInfo = this.getReservationDate();
+        const _this = this;
 
         const reservationModalTitle = reservationModalContent.querySelector('.modal-title');
         reservationModalTitle.textContent = `${dateInfo.year}년 ${dateInfo.month}월 ${dateInfo.date}일 예약 현황`;
