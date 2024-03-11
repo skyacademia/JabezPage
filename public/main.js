@@ -360,11 +360,18 @@ class Calendar {
                     date.appendChild(span);
                     if (this.dayReservation[this.day].length > 0) {
                         this.dayReservation[this.day].forEach((reservation) => {
-                            const reservationInfo = createElement('li', { classList: ['date-reservation-info'] },
-                                [isMobile ?
-                                    `${reservation.activity}` : `${reservation.startDateTime.split(' ')[1].split(':')[0]}:${reservation.startDateTime.split(' ')[1].split(':')[1]}~${reservation.endDateTime.split(' ')[1].split(':')[0]}:${reservation.endDateTime.split(' ')[1].split(':')[1]} ${reservation.activity}`]);
-                            if (isMobile) { reservationInfo.style.height = '1rem'; }
-                            dayReservationList.appendChild(reservationInfo);
+                            let reservationInfo=null;
+                            if(isMobile){
+                                reservationInfo = createElement('i', { classList: ['bi','bi-dot']})
+                                dayReservation.style.display = 'flex';
+                                dayReservation.style.flexWrap = 'wrap';
+                                dayReservation.appendChild(reservationInfo);
+                            }
+                            else if(isMobile == false){
+                                reservationInfo = createElement('li', { classList: ['date-reservation-info'] },
+                                [`${reservation.startDateTime.split(' ')[1].split(':')[0]}:${reservation.startDateTime.split(' ')[1].split(':')[1]}~${reservation.endDateTime.split(' ')[1].split(':')[0]}:${reservation.endDateTime.split(' ')[1].split(':')[1]} ${reservation.activity}`]);
+                                dayReservationList.appendChild(reservationInfo);
+                            }
                         });
                         dayReservation.appendChild(dayReservationList);
                         date.appendChild(dayReservation);
@@ -410,9 +417,10 @@ class Calendar {
         // 날짜 높이 조절
         weeks.forEach((week) => {
             week.querySelectorAll('.date').forEach((date) => {
-                date.style.height = '5vh';
+                date.style.height = '6vh';
+                date.style.padding = '0.25rem'
             });
-        });
+        });  
 
         // 날짜의 dataset 일부 삭제(모달 이동 방지)
         weeks.forEach((week) => {
