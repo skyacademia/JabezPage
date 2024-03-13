@@ -716,7 +716,7 @@ app.get('/api/reservation/get/:year/:month/:day', (req, res) => {
   const year = req.params.year;
   const month = req.params.month;
   const day = req.params.day;
-  const yearMonthDayString = year + '-' + month < 10 ? `0${month}` : month  + '-' + day < 10 ? `0${day}` : day + '%';
+  const yearMonthDayString = year + '-' + month < 10 ? `0${month}` : month + '-' + day < 10 ? `0${day}` : day + '%';
   let db = new sqlite3.Database('./database/Jabez_database.db', sqlite3.OPEN_READONLY, (err) => {
     if (err) {
       console.error(err.message);
@@ -765,9 +765,9 @@ app.post('/api/reservation/create', (req, res) => {
   });
 
   // 데이터베이스에서 예약된 시간을 가져와서 겹치는지 확인
-  const dateArray = repeatReservationDate.length > 0 ? [reservationDate,...repeatReservationDate] : [reservationDate];
+  const dateArray = repeatReservationDate.length > 0 ? [reservationDate, ...repeatReservationDate] : [reservationDate];
   const placeholders = dateArray.map(() => '?').join(', ');
-  
+
   const sqlSelectQuery = `SELECT * FROM reservation_Information_tbl WHERE DATE(startDateTime) in (${placeholders}) ORDER BY DATE(startDateTime) ASC`;
   db.all(sqlSelectQuery, placeholders, (err, rows) => {
     const rowInfo = {};
@@ -776,16 +776,16 @@ app.post('/api/reservation/create', (req, res) => {
     } else {
       if (rows.length > 0) {
         rows.forEach((row) => {
-          if(rowInfo.keys().includes(row.startDateTime.split(' ')[0])){ // rowInfo에 해당 날짜가 이미 존재하는 경우
-            rowInfo[row.startDateTime.split(' ')[0]].push({startTime: row.startDateTime.split(' ')[1].split(':')[0], endTime: row.endDateTime.split(' ')[1].split(':')[0]});
-          }else{ // rowInfo에 해당 날짜가 존재하지 않는 경우
-            rowInfo[row.startDateTime.split(' ')[0]] = [{startTime: row.startDateTime.split(' ')[1].split(':')[0], endTime: row.endDateTime.split(' ')[1].split(':')[0]}];
+          if (rowInfo.keys().includes(row.startDateTime.split(' ')[0])) { // rowInfo에 해당 날짜가 이미 존재하는 경우
+            rowInfo[row.startDateTime.split(' ')[0]].push({ startTime: row.startDateTime.split(' ')[1].split(':')[0], endTime: row.endDateTime.split(' ')[1].split(':')[0] });
+          } else { // rowInfo에 해당 날짜가 존재하지 않는 경우
+            rowInfo[row.startDateTime.split(' ')[0]] = [{ startTime: row.startDateTime.split(' ')[1].split(':')[0], endTime: row.endDateTime.split(' ')[1].split(':')[0] }];
           }
         });
-        
+
         // 날짜별로 예약 시작 시간과 종료 시간이 이미 예약된 시간과 겹치는지 확인
         dateArray.forEach((date) => {
-          if(rowInfo.keys().includes(date)){
+          if (rowInfo.keys().includes(date)) {
             const newStartTime = startTime.split(':')[0];
             const newEndTime = endTime.split(':')[0];
             rowInfo[date].forEach((row) => {
@@ -827,10 +827,30 @@ app.post('/api/reservation/create', (req, res) => {
       db.run(sqlInsertQuery, insertDataArray, (err) => {
         if (err) {
           console.error(err.message);
+          res.send({ success: false });
         } else {
           // 데이터베이스에 추가되면 성공 메시지 전송
-          console.log('Query successfully executed.');
-          res.send({ success: true });
+          console.log('Query successfully executed. / 예약 추가 성공');
+          const insertLogPlaceholders = dateArray.map((date) => {
+            return `'${date} ${startTime}:00'`;
+          }).join(', '); // 데이터베이스에 추가할 데이터를 담을 변수 
+
+          // 예약 추가 이력 로그를 남김
+          const sqlLogInsertQuery = `INSERT INTO reservation_log_tbl  
+          (workType, reservationId, afterActivity, afterStartDateTime, afterEndDateTime, afterReservationPerson) 
+          SELECT 'create', id, activity, startDateTime, endDateTime, reservationPerson 
+          FROM reservation_Information_tbl 
+          WHERE startDateTime IN (${insertLogPlaceholders})`;
+          console.log('sqlLogInsertQuery : ', sqlLogInsertQuery);
+          db.run(sqlLogInsertQuery, (err) => {
+            if (err) {
+              console.error(err.message);
+              res.send({ success: false, message: '예약 추가 이력 로그 추가 실패' });
+            } else {
+              console.log('Query successfully executed. / 예약 추가 이력 로그 추가 성공');
+              res.send({ success: true });
+            }
+          });
         }
       });
     }
@@ -908,14 +928,23 @@ app.post('/api/reservation/delete', (req, res) => {
       console.log('Connected to the database.');
     }
   });
-  // 데이터베이스에서 id로 조회한 뒤, 비밀번호가 일치한지 확인하고 같으면 데이터를 삭제
-  db.run(`DELETE FROM reservation_Information_tbl WHERE id = ?`, id, (err) => {
+  // 변경내역 테이블에 삭제 이력 로그를 남긴 후, 데이터베이스에서 데이터를 삭제
+  const sqlLogInsertQuery = `INSERT INTO reservation_log_tbl (workType, reservationId, prevActivity, prevStartDateTime, prevEndDateTime, prevReservationPerson) SELECT 'delete', id, activity, startDateTime, endDateTime, reservationPerson FROM reservation_Information_tbl WHERE id = ?`;
+  console.log('sqlLogInsertQuery : ', sqlLogInsertQuery);
+  db.run(sqlLogInsertQuery, id, (err) => {
     if (err) {
       console.error(err.message);
+      res.send({ success: false, message: '예약 삭제 이력 로그 추가 실패' });
     } else {
-      // 데이터베이스에서 삭제되면 성공 메시지 전송
-      console.log('Query successfully executed.');
-      res.send({ success: true });
+      db.run(`DELETE FROM reservation_Information_tbl WHERE id = ?`, id, (err) => {
+        if (err) {
+          console.error(err.message);
+        } else {
+          // 데이터베이스에서 삭제되면 성공 메시지 전송
+          console.log('Query successfully executed.');
+          res.send({ success: true });
+        }
+      });
     }
   });
   // 데이터베이스 연결 종료
@@ -952,12 +981,13 @@ app.post('/api/reservation/update', (req, res) => {
     if (err) {
       console.error(err.message);
     } else {
-      console.log('Connected to the database.');
+      console.log('update를 위한 데이터베이스 연결 성공.');
     }
   }
   );
 
   const query = `SELECT * FROM reservation_Information_tbl WHERE startDateTime LIKE ?`;
+  console.log("수정할 날짜의 예약정보와 겹치는지 확인하기 위한 조회 시작");
   db.all(query, `${reservationDate}%`, (err, rows) => {
     if (err) {
       console.error(err.message);
@@ -1009,8 +1039,20 @@ app.post('/api/reservation/update', (req, res) => {
                       console.error(err.message);
                     } else {
                       // 데이터베이스에 수정되면 성공 메시지 전송
-                      console.log('Query successfully executed.');
-                      res.send({ success: true });
+                      console.log('Query successfully executed. / 예약 수정 성공');
+                      const sqlLogInsertQuery = `INSERT INTO reservation_log_tbl 
+                      (workType, reservationId, prevActivity, prevStartDateTime, prevEndDateTime, prevReservationPerson, afterActivity, afterStartDateTime, afterEndDateTime, afterReservationPerson) 
+                      select 'update', ${rows[0].id}, '${rows[0].activity}', '${rows[0].startDateTime}', '${rows[0].endDateTime}', '${rows[0].reservationPerson}', activity, startDateTime, endDateTime, reservationPerson from reservation_Information_tbl where id = ${rows[0].id}`;
+                      console.log('sqlLogInsertQuery : ', sqlLogInsertQuery);
+                      db.run(sqlLogInsertQuery, (err) => {
+                        if (err) {
+                          console.error(err.message);
+                          res.send({ success: false, message: '예약 수정 이력 로그 추가 실패' });
+                        } else {
+                          console.log('Query successfully executed. / 예약 수정 이력 로그 추가 성공');
+                          res.send({ success: true });
+                        }
+                      });
                     }
                   });
               } else {
@@ -1033,11 +1075,50 @@ app.post('/api/reservation/update', (req, res) => {
             }
           }
         });
+      } else {
+        // 수정한 시간이 겹치지 않으면 데이터베이스에서 id로 조회한 뒤, 비밀번호가 일치한지 확인 후 데이터 수정
+        const sqlQuery = `SELECT * FROM reservation_Information_tbl WHERE id = ?`;
+        db.all(sqlQuery, id, (err, rows) => {
+          if (err) {
+            console.error(err.message);
+          } else {
+            if (rows.length > 0) {
+              const dbPassword = rows[0].password;
+              const dbSalt = rows[0].salt;
+              const formattedStartDateTime = reservationDate + " " + startTime + ':00';
+              const formattedEndDateTime = reservationDate + " " + endTime + ':00';
+
+              // undefined가 아니면 비밀번호를 변경하고, undefined면 비밀번호를 변경하지 않음
+              if (encryptPassword(password, dbSalt)[0] === dbPassword) {
+                db.run(`UPDATE reservation_Information_tbl SET activity = ?, startDateTime = ?, endDateTime = ?, reservationPerson = ? WHERE id = ?`,
+                  [activity, formattedStartDateTime, formattedEndDateTime, name, id], (err) => {
+                    if (err) {
+                      console.error(err.message);
+                    } else {
+                      // 데이터베이스에 수정되면 성공 메시지 전송
+                      console.log('Query successfully executed. / 예약 수정 성공');
+                      const sqlLogInsertQuery = `INSERT INTO reservation_log_tbl 
+                      (workType, reservationId, prevActivity, prevStartDateTime, prevEndDateTime, prevReservationPerson, afterActivity, afterStartDateTime, afterEndDateTime, afterReservationPerson) 
+                      select 'update', ${rows[0].id}, '${rows[0].activity}', '${rows[0].startDateTime}', '${rows[0].endDateTime}', '${rows[0].reservationPerson}', activity, startDateTime, endDateTime, reservationPerson from reservation_Information_tbl where id = ${rows[0].id}`;
+                      console.log('sqlLogInsertQuery : ', sqlLogInsertQuery);
+                      db.run(sqlLogInsertQuery, (err) => {
+                        if (err) {
+                          console.error(err.message);
+                          res.send({ success: false, message: '예약 수정 이력 로그 추가 실패' });
+                        } else {
+                          console.log('Query successfully executed. / 예약 수정 이력 로그 추가 성공');
+                          res.send({ success: true });
+                        }
+                      });
+                    }
+                  });
+              }
+            }
+          }
+        });
       }
     }
   });
-
-
   // 데이터베이스 연결 종료
   db.close((err) => {
     if (err) {
