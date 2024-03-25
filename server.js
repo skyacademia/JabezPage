@@ -6,8 +6,10 @@ const session = require('express-session');
 const e = require('express');
 const crypto = require('crypto');
 const app = express();
+const subPageApp = express();
 const sqliteStoreFactory = require('express-session-sqlite').default;
 const SQLiteStore = sqliteStoreFactory(session);
+const path = require('path');
 
 // app.use(morgan('combined'));
 
@@ -41,9 +43,10 @@ app.use(session({
     httpOnly: true,
   }
 }));
-
 // public 폴더를 static 폴더로 지정
 app.use(express.static('public'));
+
+// page 폴더를 static 폴더로 지정
 
 // 서버를 8080 포트로 실행
 app.listen(8080, () => {
@@ -108,6 +111,11 @@ app.get('/', (req, res) => {
       }
     });
   }
+});
+
+app.get('/page/:user', (req, res) => {
+  const user = req.params.user;
+  res.sendFile(__dirname + '/page/' + user + '/index.html');
 });
 
 // client가 '/admin'으로 접속하면 admin.html을 전송
@@ -236,6 +244,14 @@ app.get('/admin/manageContentSection', (req, res) => {
 app.get('/admin/manageAccount', (req, res) => {
   if (req.session.isLogin) {
     res.render('./admin/adminManageAccount.ejs', { result: false });
+  } else {
+    res.redirect('/admin/login');
+  }
+});
+
+app.get('/admin/manageReservation', (req, res) => {
+  if (req.session.isLogin) {
+    res.render('./admin/adminManageReservation.ejs');
   } else {
     res.redirect('/admin/login');
   }
